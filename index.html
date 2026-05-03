@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Suivi Bancaire</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#fffcf5">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Suivi Banque">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>">
+  <style>
+    /* (mêmes styles que précédemment, je les remets pour compacité) */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f0f0f0;
+      display: flex;
+      justify-content: center;
+      padding: 10px;
+    }
+    .app {
+      max-width: 600px;
+      width: 100%;
+      background: #fffcf5;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      padding: 12px;
+      font-size: 0.9rem;
+    }
+    .onglets {
+      display: flex;
+      border-bottom: 2px solid #c0b8a0;
+      margin-bottom: 12px;
+    }
+    .onglet {
+      padding: 8px 12px;
+      cursor: pointer;
+      border-radius: 6px 6px 0 0;
+      background: #e9e6df;
+      margin-right: 4px;
+      font-weight: 500;
+      font-size: 0.85rem;
+    }
+    .onglet.actif {
+      background: white;
+      border-color: #c0b8a0;
+      font-weight: 600;
+    }
+    .contenu-onglet { display: none; }
+    .contenu-onglet.actif { display: block; }
+
+    .banque-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .banque-header h1 { font-size: 1.2rem; }
+    .soldes {
+      background: #e9e6df;
+      border: 1px solid #c0b8a0;
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin-bottom: 8px;
+    }
+    .solde-reel { font-size: 0.85rem; }
+    .reste-a-vivre { font-size: 1.3rem; font-weight: bold; }
+    .positif { color: #1e5d3f; }
+    .negatif { color: #b00020; }
+    .rest-container { display: flex; align-items: center; gap: 6px; }
+    .edit-icon { cursor: pointer; font-size: 1rem; }
+    .ajustement-input { margin-top: 6px; display: none; gap: 6px; align-items: center; }
+    .ajustement-input input { width: 100px; padding: 4px; }
+    .ajustement-input button { padding: 4px 8px; font-size: 0.8rem; cursor: pointer; }
+    .indicateur-ajustement { font-size: 0.7rem; color: #555; display: none; }
+
+    .mois-selector {
+      text-align: center; margin: 8px 0; display: flex; justify-content: center; align-items: center; gap: 10px;
+    }
+    .mois-selector button { background: none; border: 1px solid #aaa; border-radius: 4px; padding: 4px 8px; cursor: pointer; }
+    .mois-selector span { font-weight: 600; min-width: 110px; display: inline-block; }
+
+    .table-wrapper { overflow-x: auto; margin-bottom: 12px; border: 1px solid #c0b8a0; border-radius: 4px; background: white; }
+    table { width: 100%; border-collapse: collapse; min-width: 550px; }
+    th {
+      background: #f3efe5; font-weight: 600; font-size: 0.75rem; text-transform: uppercase;
+      padding: 8px 4px; border-bottom: 2px solid #b0a58c;
+    }
+    td { padding: 6px 4px; border-bottom: 1px solid #ddd6c8; font-size: 0.8rem; }
+    .text-right { text-align: right; }
+    .text-center { text-align: center; }
+    .debit { color: #b00020; }
+    .credit { color: #1e5d3f; }
+    .pointe-checkbox { width: 18px; height: 18px; cursor: pointer; accent-color: #1e5d3f; }
+
+    .btn-ajout, .btn-generer {
+      width: 100%; padding: 12px; font-size: 0.95rem; border: 1px solid #8b7d6b;
+      background: #f3efe5; color: #333; border-radius: 4px; cursor: pointer; font-weight: 500; margin-top: 6px;
+    }
+    .btn-ajout:hover, .btn-generer:hover { background: #e6dfcc; }
+
+    /* Modal */
+    .modal-overlay {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 10;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: white; border-radius: 8px; padding: 16px; width: 320px; max-width: 90%;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    }
+    .modal h3 { margin-bottom: 12px; font-size: 1.1rem; }
+    .modal label { display: block; font-size: 0.8rem; margin-top: 8px; margin-bottom: 2px; }
+    .modal input, .modal select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem; }
+    .btn-group { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+    .btn-save { background: #1e5d3f; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: 600; }
+    .btn-cancel { background: #eee; border: 1px solid #aaa; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
+
+    /* Gabarits / Analyse */
+    .gabarit-form {
+      background: white; border: 1px solid #c0b8a0; border-radius: 6px; padding: 12px; margin-bottom: 12px;
+    }
+    .gabarit-form label { display: block; font-size: 0.8rem; margin-top: 6px; margin-bottom: 2px; }
+    .gabarit-form input, .gabarit-form select { width: 100%; padding: 7px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem; }
+    .liste-gabarits { list-style: none; margin-top: 10px; }
+    .gabarit-item {
+      display: flex; justify-content: space-between; align-items: center;
+      background: #fff; border: 1px solid #ddd; padding: 8px; border-radius: 6px; margin-bottom: 6px;
+    }
+    .gabarit-info { flex: 1; font-size: 0.85rem; }
+    .btn-supprimer { background: #b00020; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
+
+    .analyse-resume { background: white; border: 1px solid #c0b8a0; border-radius: 6px; padding: 12px; margin-bottom: 16px; }
+    .analyse-resume table { min-width: auto; }
+    .filtre-periode { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
+    .filtre-periode select, .filtre-periode input { padding: 6px; border: 1px solid #ccc; border-radius: 4px; }
+    .filtre-periode button { background: #1e5d3f; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
+    /* bouton d'installation (affiché si non installé) */
+    #btn-install { display: none; float: right; background: #f3efe5; border: 1px solid #8b7d6b; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+<div class="app" id="app">
+  <button id="btn-install" title="Installer l'application">📲 Installer</button>
+  <div class="onglets">
+    <div class="onglet actif" data-onglet="livre">📖 Livre</div>
+    <div class="onglet" data-onglet="gabarits">🗓️ Gabarits</div>
+    <div class="onglet" data-onglet="analyse">📊 Analyse</div>
+  </div>
+
+  <!-- Livre -->
+  <div class="contenu-onglet actif" id="livre">
+    <div class="banque-header">
+      <h1>Compte Courant</h1>
+      <span>⚙️</span>
+    </div>
+    <div class="soldes">
+      <div class="solde-reel" id="solde-reel">Solde réel : 0,00 €</div>
+      <div class="rest-container">
+        <span class="reste-a-vivre" id="reste-a-vivre">Reste à vivre : 0,00 €</span>
+        <span class="edit-icon" id="btn-edit-ajustement">✏️</span>
+        <span class="indicateur-ajustement" id="ajustement-indicator">(ajusté)</span>
+      </div>
+      <div class="ajustement-input" id="ajustement-input-container">
+        <input type="number" id="ajustement-montant" step="0.01" placeholder="+/-">
+        <button id="btn-apply-ajustement">Appliquer</button>
+        <button id="btn-reset-ajustement">Réinit.</button>
+      </div>
+    </div>
+
+    <div class="mois-selector">
+      <button id="mois-precedent">◀</button>
+      <span id="mois-courant-livre">…</span>
+      <button id="mois-suivant">▶</button>
+    </div>
+
+    <div class="table-wrapper">
+      <table id="table-operations">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Opération</th>
+            <th>Catégorie</th>
+            <th>Mode</th>
+            <th class="text-right">Débit</th>
+            <th class="text-right">Crédit</th>
+            <th class="text-right">Solde</th>
+            <th class="text-center">Pointé</th>
+          </tr>
+        </thead>
+        <tbody id="corps-table"></tbody>
+      </table>
+    </div>
+
+    <button class="btn-ajout" id="btn-ajout">+ Nouvelle opération</button>
+    <button class="btn-generer" id="btn-generer">🔄 Générer opérations récurrentes du mois</button>
+  </div>
+
+  <!-- Gabarits -->
+  <div class="contenu-onglet" id="gabarits">
+    <h2>Charges fixes / Revenus récurrents</h2>
+    <div class="gabarit-form">
+      <label for="gabarit-type">Type</label>
+      <select id="gabarit-type"><option value="depense">Dépense</option><option value="revenu">Revenu</option></select>
+      <label for="gabarit-libelle">Libellé</label>
+      <input type="text" id="gabarit-libelle" placeholder="Ex: Loyer">
+      <label for="gabarit-categorie">Catégorie</label>
+      <select id="gabarit-categorie">
+        <option>Alimentation</option><option>Logement</option><option>Transport</option><option>Loisirs</option><option>Salaire</option><option>Autres revenus</option><option>Santé</option><option>Divers</option>
+      </select>
+      <label for="gabarit-mode">Mode</label>
+      <select id="gabarit-mode"><option>Prélèvement</option><option>Virement</option><option>CB</option><option>Chèque</option></select>
+      <label for="gabarit-montant">Montant</label>
+      <input type="number" id="gabarit-montant" step="0.01" min="0.01" placeholder="0.00">
+      <label for="gabarit-jour">Jour du mois</label>
+      <input type="number" id="gabarit-jour" min="1" max="31" value="1">
+      <button class="btn-save" id="btn-ajout-gabarit">Ajouter ce gabarit</button>
+    </div>
+    <h3>Gabarits existants</h3>
+    <ul class="liste-gabarits" id="liste-gabarits"></ul>
+  </div>
+
+  <!-- Analyse -->
+  <div class="contenu-onglet" id="analyse">
+    <h2>Analyse des dépenses</h2>
+    <div class="filtre-periode">
+      <label>Période :</label>
+      <select id="analyse-periode-type">
+        <option value="12m">12 derniers mois</option>
+        <option value="6m">6 derniers mois</option>
+        <option value="tout">Depuis le début</option>
+        <option value="perso">Personnalisée</option>
+      </select>
+      <span id="periode-perso" style="display:none;">
+        <input type="month" id="analyse-debut"> – <input type="month" id="analyse-fin">
+      </span>
+      <button id="btn-actualiser-analyse">Actualiser</button>
+    </div>
+    <div class="analyse-resume" id="analyse-resultat">
+      <!-- Rempli dynamiquement -->
+    </div>
+  </div>
+
+  <!-- Modal opération -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal">
+      <h3>Nouvelle opération</h3>
+      <label for="form-date">Date</label>
+      <input type="date" id="form-date">
+      <label for="form-type">Type</label>
+      <select id="form-type"><option value="depense">Dépense</option><option value="revenu">Revenu</option></select>
+      <label for="form-libelle">Libellé</label>
+      <input type="text" id="form-libelle">
+      <label for="form-categorie">Catégorie</label>
+      <select id="form-categorie"><option>Alimentation</option><option>Logement</option><option>Transport</option><option>Loisirs</option><option>Salaire</option><option>Autres revenus</option><option>Santé</option><option>Divers</option></select>
+      <label for="form-mode">Mode</label>
+      <select id="form-mode"><option>CB</option><option>Prélèvement</option><option>Virement</option><option>Chèque</option><option>Espèces</option></select>
+      <label for="form-montant">Montant (€)</label>
+      <input type="number" id="form-montant" step="0.01" min="0.01">
+      <div class="btn-group">
+        <button class="btn-cancel" id="btn-cancel">Annuler</button>
+        <button class="btn-save" id="btn-save">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // --- IndexedDB pour persistance ---
+  const DB_NAME = 'suivi-bancaire-db';
+  const DB_VERSION = 1;
+  let db;
+
+  function openDB() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
+      request.onupgradeneeded = (e) => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains('operations')) {
+          db.createObjectStore('operations', { keyPath: 'id' });
+        }
+        if (!db.objectStoreNames.contains('gabarits')) {
+          db.createObjectStore('gabarits', { keyPath: 'id' });
+        }
+        if (!db.objectStoreNames.contains('ajustement')) {
+          db.createObjectStore('ajustement', { keyPath: 'cle' });
+        }
+      };
+      request.onsuccess = (e) => {
+        db = e.target.result;
+        resolve(db);
+      };
+      request.onerror = (e) => reject(e.target.error);
+    });
+  }
+
+  function readAll(storeName) {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(storeName, 'readonly');
+      const store = tx.objectStore(storeName);
+      const request = store.getAll();
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  function writeRecord(storeName, record) {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(storeName, 'readwrite');
+      const store = tx.objectStore(storeName);
+      store.put(record);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  function deleteRecord(storeName, id) {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(storeName, 'readwrite');
+      const store = tx.objectStore(storeName);
+      store.delete(id);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  // --- État global ---
+  let operations = [];
+  let gabarits = [];
+  let prochainIdOp = 1;
+  let prochainIdGab = 1;
+  let moisActuel = new Date().getMonth();
+  let anneeActuelle = new Date().getFullYear();
+  let ajustementResteAVivre = 0;
+
+  // Chargement initial depuis IndexedDB
+  async function chargerDonnees() {
+    const ops = await readAll('operations');
+    const gabs = await readAll('gabarits');
+    const ajust = await readAll('ajustement');
+    operations = ops;
+    gabarits = gabs;
+    if (ajust.length > 0) {
+      ajustementResteAVivre = ajust.find(a => a.cle === 'global')?.valeur || 0;
+    }
+    // Déterminer les prochains IDs
+    const maxOpId = operations.reduce((max, op) => Math.max(max, op.id), 0);
+    prochainIdOp = maxOpId + 1;
+    const maxGabId = gabarits.reduce((max, g) => Math.max(max, g.id), 0);
+    prochainIdGab = maxGabId + 1;
+  }
+
+  async function sauvegarderAjustement() {
+    await writeRecord('ajustement', { cle: 'global', valeur: ajustementResteAVivre });
+  }
+
+  // Initialisation des gabarits si vide
+  function initGabarits() {
+    if (gabarits.length === 0) {
+      const defauts = [
+        { id: prochainIdGab++, type: 'depense', libelle: 'Loyer', categorie: 'Logement', mode: 'Prélèvement', montant: 500, jour: 5 },
+        { id: prochainIdGab++, type: 'revenu', libelle: 'Salaire', categorie: 'Salaire', mode: 'Virement', montant: 2000, jour: 1 }
+      ];
+      gabarits.push(...defauts);
+      defauts.forEach(g => writeRecord('gabarits', g));
+    }
+  }
+
+  function genererOperationsPourMois(mois, annee) {
+    const moisStr = `${annee}-${String(mois+1).padStart(2,'0')}`;
+    const existantes = operations.filter(op => op.moisGeneration === moisStr && op.gabaritId);
+    const idsExistants = existantes.map(op => op.gabaritId);
+
+    gabarits.forEach(gab => {
+      if (idsExistants.includes(gab.id)) return;
+      const dernierJour = new Date(annee, mois+1, 0).getDate();
+      const jour = Math.min(gab.jour, dernierJour);
+      const dateStr = `${annee}-${String(mois+1).padStart(2,'0')}-${String(jour).padStart(2,'0')}`;
+      const newOp = {
+        id: prochainIdOp++,
+        date: dateStr,
+        libelle: gab.libelle,
+        categorie: gab.categorie,
+        mode: gab.mode,
+        montant: gab.montant,
+        type: gab.type,
+        pointe: false,
+        gabaritId: gab.id,
+        moisGeneration: moisStr
+      };
+      operations.push(newOp);
+      writeRecord('operations', newOp);
+    });
+  }
+
+  function trierOperations() {
+    operations.sort((a,b) => new Date(a.date) - new Date(b.date));
+  }
+
+  function filtrerOperationsParMois(mois, annee) {
+    return operations.filter(op => {
+      const d = new Date(op.date);
+      return d.getFullYear() === annee && d.getMonth() === mois;
+    });
+  }
+
+  function calculerRestes() {
+    const soldeReel = operations
+      .filter(op => op.pointe)
+      .reduce((sum, op) => sum + (op.type === 'revenu' ? op.montant : -op.montant), 0);
+    const opsDuMois = filtrerOperationsParMois(moisActuel, anneeActuelle);
+    const revenusPrevus = opsDuMois.filter(op => !op.pointe && op.type === 'revenu').reduce((s, op) => s + op.montant, 0);
+    const depensesPrevues = opsDuMois.filter(op => !op.pointe && op.type === 'depense').reduce((s, op) => s + op.montant, 0);
+    return {
+      soldeReel,
+      resteAVivre: soldeReel + revenusPrevus - depensesPrevues + ajustementResteAVivre
+    };
+  }
+
+  function calculerSoldesProgressifs(listeOps) {
+    let solde = 0;
+    return listeOps.map(op => {
+      solde += (op.type === 'revenu' ? op.montant : -op.montant);
+      return solde;
+    });
+  }
+
+  function afficherLivre() {
+    const opsDuMois = filtrerOperationsParMois(moisActuel, anneeActuelle);
+    const soldesLignes = calculerSoldesProgressifs(opsDuMois);
+    const corps = document.getElementById('corps-table');
+    corps.innerHTML = '';
+    if (opsDuMois.length === 0) {
+      corps.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:20px;">Aucune opération ce mois</td></tr>`;
+    } else {
+      opsDuMois.forEach((op, idx) => {
+        const solde = soldesLignes[idx];
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${new Date(op.date).toLocaleDateString('fr-FR', {day:'2-digit',month:'2-digit'})}</td>
+          <td><strong>${op.libelle}</strong>${op.gabaritId ? ' 🔁' : ''}</td>
+          <td>${op.categorie}</td>
+          <td>${op.mode}</td>
+          <td class="text-right debit">${op.type==='depense' ? op.montant.toFixed(2)+' €' : ''}</td>
+          <td class="text-right credit">${op.type==='revenu' ? op.montant.toFixed(2)+' €' : ''}</td>
+          <td class="text-right" style="font-weight:500;">${solde.toFixed(2)} €</td>
+          <td class="text-center"><input type="checkbox" class="pointe-checkbox" data-id="${op.id}" ${op.pointe ? 'checked' : ''}></td>
+        `;
+        corps.appendChild(tr);
+      });
+      document.querySelectorAll('.pointe-checkbox').forEach(cb => {
+        cb.addEventListener('change', async function(e) {
+          const id = parseInt(this.dataset.id);
+          const op = operations.find(o => o.id === id);
+          if (op) {
+            op.pointe = this.checked;
+            await writeRecord('operations', op);
+            afficherToutLivre();
+          }
+        });
+      });
+    }
+    document.getElementById('mois-courant-livre').textContent = 
+      new Date(anneeActuelle, moisActuel).toLocaleDateString('fr-FR', {month:'long', year:'numeric'});
+    const { soldeReel, resteAVivre } = calculerRestes();
+    document.getElementById('solde-reel').textContent = `Solde réel : ${soldeReel.toFixed(2)} €`;
+    const resteEl = document.getElementById('reste-a-vivre');
+    resteEl.textContent = `Reste à vivre : ${resteAVivre.toFixed(2)} €`;
+    resteEl.className = 'reste-a-vivre ' + (resteAVivre >= 0 ? 'positif' : 'negatif');
+    document.getElementById('ajustement-indicator').style.display = (ajustementResteAVivre !== 0) ? 'inline' : 'none';
+  }
+
+  function afficherToutLivre() {
+    trierOperations();
+    afficherLivre();
+  }
+
+  // --- Ajustement ---
+  document.getElementById('btn-edit-ajustement').addEventListener('click', () => {
+    document.getElementById('ajustement-input-container').style.display = 'flex';
+    document.getElementById('ajustement-montant').value = ajustementResteAVivre || '';
+    document.getElementById('ajustement-montant').focus();
+  });
+  document.getElementById('btn-apply-ajustement').addEventListener('click', async () => {
+    const val = parseFloat(document.getElementById('ajustement-montant').value);
+    if (isNaN(val)) { alert('Valeur invalide'); return; }
+    ajustementResteAVivre = val;
+    await sauvegarderAjustement();
+    document.getElementById('ajustement-input-container').style.display = 'none';
+    afficherToutLivre();
+  });
+  document.getElementById('btn-reset-ajustement').addEventListener('click', async () => {
+    ajustementResteAVivre = 0;
+    await sauvegarderAjustement();
+    document.getElementById('ajustement-montant').value = '';
+    document.getElementById('ajustement-input-container').style.display = 'none';
+    afficherToutLivre();
+  });
+
+  // --- Mois ---
+  document.getElementById('mois-precedent').addEventListener('click', () => {
+    moisActuel--;
+    if (moisActuel < 0) { moisActuel = 11; anneeActuelle--; }
+    genererOperationsPourMois(moisActuel, anneeActuelle);
+    afficherToutLivre();
+  });
+  document.getElementById('mois-suivant').addEventListener('click', () => {
+    moisActuel++;
+    if (moisActuel > 11) { moisActuel = 0; anneeActuelle++; }
+    genererOperationsPourMois(moisActuel, anneeActuelle);
+    afficherToutLivre();
+  });
+  document.getElementById('btn-generer').addEventListener('click', () => {
+    genererOperationsPourMois(moisActuel, anneeActuelle);
+    afficherToutLivre();
+  });
+
+  // --- Gabarits ---
+  function afficherGabarits() {
+    const liste = document.getElementById('liste-gabarits');
+    liste.innerHTML = '';
+    gabarits.forEach(g => {
+      const li = document.createElement('li');
+      li.className = 'gabarit-item';
+      li.innerHTML = `
+        <div class="gabarit-info">
+          <strong>${g.libelle}</strong> (${g.type==='revenu'?'Revenu':'Dépense'})<br>
+          ${g.categorie} - ${g.mode} - ${g.montant.toFixed(2)} € le ${g.jour}
+        </div>
+        <button class="btn-supprimer" data-id="${g.id}">✕</button>
+      `;
+      liste.appendChild(li);
+    });
+    document.querySelectorAll('.btn-supprimer').forEach(btn => {
+      btn.addEventListener('click', async function() {
+        const id = parseInt(this.dataset.id);
+        await deleteRecord('gabarits', id);
+        gabarits = gabarits.filter(g => g.id !== id);
+        afficherGabarits();
+      });
+    });
+  }
+
+  document.getElementById('btn-ajout-gabarit').addEventListener('click', async () => {
+    const type = document.getElementById('gabarit-type').value;
+    const libelle = document.getElementById('gabarit-libelle').value.trim();
+    const categorie = document.getElementById('gabarit-categorie').value;
+    const mode = document.getElementById('gabarit-mode').value;
+    const montant = parseFloat(document.getElementById('gabarit-montant').value);
+    const jour = parseInt(document.getElementById('gabarit-jour').value, 10);
+    if (!libelle || isNaN(montant) || montant <= 0 || jour < 1 || jour > 31) {
+      alert('Remplissez correctement tous les champs.');
+      return;
+    }
+    const newGab = { id: prochainIdGab++, type, libelle, categorie, mode, montant, jour };
+    gabarits.push(newGab);
+    await writeRecord('gabarits', newGab);
+    document.getElementById('gabarit-libelle').value = '';
+    document.getElementById('gabarit-montant').value = '';
+    document.getElementById('gabarit-jour').value = '1';
+    afficherGabarits();
+    genererOperationsPourMois(moisActuel, anneeActuelle);
+    afficherToutLivre();
+  });
+
+  // --- Analyse ---
+  function actualiserAnalyse() {
+    const typePeriode = document.getElementById('analyse-periode-type').value;
+    let debut, fin;
+    const maintenant = new Date();
+    if (typePeriode === '12m') {
+      fin = new Date(maintenant.getFullYear(), maintenant.getMonth() + 1, 0);
+      debut = new Date(fin.getFullYear(), fin.getMonth() - 12, 1);
+    } else if (typePeriode === '6m') {
+      fin = new Date(maintenant.getFullYear(), maintenant.getMonth() + 1, 0);
+      debut = new Date(fin.getFullYear(), fin.getMonth() - 6, 1);
+    } else if (typePeriode === 'tout') {
+      debut = new Date(2000, 0, 1);
+      fin = new Date(2100, 0, 1);
+    } else if (typePeriode === 'perso') {
+      const debutStr = document.getElementById('analyse-debut').value;
+      const finStr = document.getElementById('analyse-fin').value;
+      if (!debutStr || !finStr) {
+        document.getElementById('analyse-resultat').innerHTML = '<p>Veuillez choisir une plage de dates.</p>';
+        return;
+      }
+      debut = new Date(debutStr + '-01');
+      fin = new Date(finStr + '-01');
+      fin.setMonth(fin.getMonth() + 1, 0);
+    }
+
+    const depenses = operations.filter(op => {
+      const d = new Date(op.date);
+      return op.type === 'depense' && d >= debut && d <= fin;
+    });
+
+    const categories = {};
+    depenses.forEach(op => {
+      if (!categories[op.categorie]) categories[op.categorie] = 0;
+      categories[op.categorie] += op.montant;
+    });
+    const totalGeneral = Object.values(categories).reduce((s, v) => s + v, 0);
+    const diffMois = (fin.getFullYear() - debut.getFullYear()) * 12 + (fin.getMonth() - debut.getMonth()) + 1;
+
+    let html = '<table><thead><tr><th>Catégorie</th><th class="text-right">Total</th><th class="text-right">Moyenne/mois</th><th class="text-right">%</th></tr></thead><tbody>';
+    if (totalGeneral === 0) {
+      html += '<tr><td colspan="4" class="text-center">Aucune dépense sur cette période.</td></tr>';
+    } else {
+      const sorted = Object.entries(categories).sort((a,b) => b[1] - a[1]);
+      sorted.forEach(([cat, total]) => {
+        const moyenne = total / diffMois;
+        const pourcentage = (total / totalGeneral * 100).toFixed(1);
+        html += `<tr><td>${cat}</td><td class="text-right">${total.toFixed(2)} €</td><td class="text-right">${moyenne.toFixed(2)} €</td><td class="text-right">${pourcentage} %</td></tr>`;
+      });
+    }
+    html += '</tbody></table>';
+    document.getElementById('analyse-resultat').innerHTML = html;
+  }
+
+  document.getElementById('analyse-periode-type').addEventListener('change', function() {
+    document.getElementById('periode-perso').style.display = this.value === 'perso' ? 'inline' : 'none';
+  });
+  document.getElementById('btn-actualiser-analyse').addEventListener('click', actualiserAnalyse);
+
+  function initAnalyseDates() {
+    const maintenant = new Date();
+    document.getElementById('analyse-debut').value = `${maintenant.getFullYear()}-${String(maintenant.getMonth()+1).padStart(2,'0')}`;
+    document.getElementById('analyse-fin').value = `${maintenant.getFullYear()}-${String(maintenant.getMonth()+1).padStart(2,'0')}`;
+  }
+
+  // --- Onglets ---
+  document.querySelectorAll('.onglet').forEach(onglet => {
+    onglet.addEventListener('click', function() {
+      const nom = this.dataset.onglet;
+      document.querySelectorAll('.onglet').forEach(o => o.classList.remove('actif'));
+      this.classList.add('actif');
+      document.querySelectorAll('.contenu-onglet').forEach(c => c.classList.remove('actif'));
+      document.getElementById(nom).classList.add('actif');
+      if (nom === 'gabarits') afficherGabarits();
+      if (nom === 'livre') afficherToutLivre();
+      if (nom === 'analyse') actualiserAnalyse();
+    });
+  });
+
+  // --- Modal opération ---
+  const modalOverlay = document.getElementById('modal-overlay');
+  document.getElementById('btn-ajout').addEventListener('click', () => {
+    document.getElementById('form-date').value = new Date().toISOString().slice(0,10);
+    document.getElementById('form-type').value = 'depense';
+    document.getElementById('form-libelle').value = '';
+    document.getElementById('form-montant').value = '';
+    modalOverlay.classList.add('active');
+  });
+  document.getElementById('btn-cancel').addEventListener('click', () => modalOverlay.classList.remove('active'));
+  modalOverlay.addEventListener('click', (e) => { if(e.target===modalOverlay) modalOverlay.classList.remove('active'); });
+  document.getElementById('btn-save').addEventListener('click', async () => {
+    const date = document.getElementById('form-date').value;
+    const type = document.getElementById('form-type').value;
+    const libelle = document.getElementById('form-libelle').value.trim();
+    const categorie = document.getElementById('form-categorie').value;
+    const mode = document.getElementById('form-mode').value;
+    const montant = parseFloat(document.getElementById('form-montant').value);
+    if (!libelle || isNaN(montant) || montant <= 0) { alert('Formulaire invalide'); return; }
+    const newOp = {
+      id: prochainIdOp++,
+      date, type, libelle, categorie, mode, montant,
+      pointe: false,
+      gabaritId: null,
+      moisGeneration: null
+    };
+    operations.push(newOp);
+    await writeRecord('operations', newOp);
+    trierOperations();
+    afficherToutLivre();
+    modalOverlay.classList.remove('active');
+  });
+
+  // --- PWA : bouton d'installation ---
+  let deferredPrompt;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    document.getElementById('btn-install').style.display = 'inline-block';
+  });
+
+  document.getElementById('btn-install').addEventListener('click', async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log('Installation :', outcome);
+      deferredPrompt = null;
+      document.getElementById('btn-install').style.display = 'none';
+    }
+  });
+
+  window.addEventListener('appinstalled', () => {
+    document.getElementById('btn-install').style.display = 'none';
+    console.log('PWA installée');
+  });
+
+  // --- Démarrage ---
+  (async () => {
+    await openDB();
+    await chargerDonnees();
+    initGabarits();
+    // Toujours générer les op du mois courant si pas déjà fait
+    genererOperationsPourMois(moisActuel, anneeActuelle);
+    trierOperations();
+    afficherToutLivre();
+    afficherGabarits();
+    initAnalyseDates();
+    // Enregistrer le service worker
+    if ('serviceWorker' in navigator) {
+      try {
+        const reg = await navigator.serviceWorker.register('sw.js');
+        console.log('Service worker enregistré :', reg.scope);
+      } catch (err) {
+        console.error('Service worker non enregistré :', err);
+      }
+    }
+  })();
+</script>
+</body>
+</html>
