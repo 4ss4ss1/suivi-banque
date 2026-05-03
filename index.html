@@ -443,6 +443,7 @@
           <td class="text-right credit">${op.type==='revenu' ? op.montant.toFixed(2)+' €' : ''}</td>
           <td class="text-right" style="font-weight:500;">${solde.toFixed(2)} €</td>
           <td class="text-center"><input type="checkbox" class="pointe-checkbox" data-id="${op.id}" ${op.pointe ? 'checked' : ''}></td>
+          <td class="text-center"><button class="btn-supprimer-op" data-id="${op.id}" style="background:none; border:none; font-size:1.2rem; cursor:pointer;">🗑️</button></td>
         `;
         corps.appendChild(tr);
       });
