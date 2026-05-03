@@ -351,21 +351,31 @@
     prochainIdOp = maxOpId + 1;
     const maxGabId = gabarits.reduce((max, g) => Math.max(max, g.id), 0);
     prochainIdGab = maxGabId + 1;
+
+    // Vérifier si l'application a déjà été initialisée
+    const initFlag = ajust.find(a => a.cle === 'init');
+    if (!initFlag) {
+      // Première utilisation → créer les gabarits par défaut et marquer comme initialisé
+      await initGabarits();  // initGabarits est async maintenant
+      await writeRecord('ajustement', { cle: 'init', valeur: 1 });
+    }
   }
 
   async function sauvegarderAjustement() {
     await writeRecord('ajustement', { cle: 'global', valeur: ajustementResteAVivre });
   }
 
-  // Initialisation des gabarits si vide
-  function initGabarits() {
+  // Initialisation des gabarits si vide (appelée UNE SEULE FOIS)
+  async function initGabarits() {
     if (gabarits.length === 0) {
       const defauts = [
         { id: prochainIdGab++, type: 'depense', libelle: 'Loyer', categorie: 'Logement', mode: 'Prélèvement', montant: 500, jour: 5 },
         { id: prochainIdGab++, type: 'revenu', libelle: 'Salaire', categorie: 'Salaire', mode: 'Virement', montant: 2000, jour: 1 }
       ];
       gabarits.push(...defauts);
-      defauts.forEach(g => writeRecord('gabarits', g));
+      for (const g of defauts) {
+        await writeRecord('gabarits', g);
+      }
     }
   }
 
@@ -721,8 +731,7 @@
   // --- Démarrage ---
   (async () => {
     await openDB();
-    await chargerDonnees();
-    initGabarits();
+    await chargerDonnees();   // <-- initialise les gabarits par défaut UNE SEULE FOIS si nécessaire
     genererOperationsPourMois(moisActuel, anneeActuelle);
     trierOperations();
     afficherToutLivre();
