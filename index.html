@@ -279,6 +279,7 @@
         if (!db.objectStoreNames.contains('operations')) db.createObjectStore('operations', { keyPath: 'id' });
         if (!db.objectStoreNames.contains('gabarits')) db.createObjectStore('gabarits', { keyPath: 'id' });
         if (!db.objectStoreNames.contains('ajustement')) db.createObjectStore('ajustement', { keyPath: 'cle' });
+        if (!db.objectStoreNames.contains('suppressions')) db.createObjectStore('suppressions', { keyPath: 'cle' });
       };
       request.onsuccess = (e) => { db = e.target.result; resolve(db); };
       request.onerror = (e) => reject(e.target.error);
@@ -339,12 +340,33 @@
     await writeRecord('ajustement', { cle: 'global', valeur: ajustementResteAVivre });
   }
 
-  function genererOperationsPourMois(mois, annee) {
+  // --- Gestion des suppressions de gabarits ---
+  async function writeSuppression(cle) {
+    await writeRecord('suppressions', { cle });
+  }
+
+  async function readSuppression(cle) {
+    return new Promise((resolve) => {
+      const tx = db.transaction('suppressions', 'readonly');
+      const store = tx.objectStore('suppressions');
+      const req = store.get(cle);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => resolve(null);
+    });
+  }
+
+  // --- Génération des opérations récurrentes (appelée automatiquement) ---
+  async function genererOperationsPourMois(mois, annee) {
     const moisStr = `${annee}-${String(mois+1).padStart(2,'0')}`;
     const existantes = operations.filter(op => op.moisGeneration === moisStr && op.gabaritId);
     const idsExistants = existantes.map(op => op.gabaritId);
-    gabarits.forEach(gab => {
-      if (idsExistants.includes(gab.id)) return;
+
+    for (const gab of gabarits) {
+      if (idsExistants.includes(gab.id)) continue; // déjà généré
+      const cleSuppr = `gabarit_${gab.id}_${moisStr}`;
+      const dejaSupprime = await readSuppression(cleSuppr);
+      if (dejaSupprime) continue; // supprimé manuellement pour ce mois
+
       const dernierJour = new Date(annee, mois+1, 0).getDate();
       const jour = Math.min(gab.jour, dernierJour);
       const dateStr = `${annee}-${String(mois+1).padStart(2,'0')}-${String(jour).padStart(2,'0')}`;
@@ -361,8 +383,8 @@
         moisGeneration: moisStr
       };
       operations.push(newOp);
-      writeRecord('operations', newOp);
-    });
+      await writeRecord('operations', newOp);
+    }
   }
 
   function trierOperations() {
@@ -426,11 +448,17 @@
         });
       });
 
+      // Suppression avec mémorisation pour les opérations récurrentes
       document.querySelectorAll('.btn-supprimer-op').forEach(btn => {
         btn.addEventListener('click', async function(e) {
           e.stopPropagation();
           const id = parseInt(this.dataset.id);
           if (confirm('Supprimer cette opération ?')) {
+            const op = operations.find(o => o.id === id);
+            if (op && op.gabaritId) {
+              const moisStr = op.moisGeneration || `${op.date.slice(0,7)}`;
+              await writeSuppression(`gabarit_${op.gabaritId}_${moisStr}`);
+            }
             await deleteRecord('operations', id);
             operations = operations.filter(op => op.id !== id);
             afficherToutLivre();
@@ -477,20 +505,20 @@
   });
 
   // --- Mois ---
-  document.getElementById('mois-precedent').addEventListener('click', () => {
+  document.getElementById('mois-precedent').addEventListener('click', async () => {
     moisActuel--;
     if (moisActuel < 0) { moisActuel = 11; anneeActuelle--; }
-    genererOperationsPourMois(moisActuel, anneeActuelle);
+    await genererOperationsPourMois(moisActuel, anneeActuelle);
     afficherToutLivre();
   });
-  document.getElementById('mois-suivant').addEventListener('click', () => {
+  document.getElementById('mois-suivant').addEventListener('click', async () => {
     moisActuel++;
     if (moisActuel > 11) { moisActuel = 0; anneeActuelle++; }
-    genererOperationsPourMois(moisActuel, anneeActuelle);
+    await genererOperationsPourMois(moisActuel, anneeActuelle);
     afficherToutLivre();
   });
-  document.getElementById('btn-generer').addEventListener('click', () => {
-    genererOperationsPourMois(moisActuel, anneeActuelle);
+  document.getElementById('btn-generer').addEventListener('click', async () => {
+    await genererOperationsPourMois(moisActuel, anneeActuelle);
     afficherToutLivre();
   });
 
@@ -538,7 +566,8 @@
     document.getElementById('gabarit-montant').value = '';
     document.getElementById('gabarit-jour').value = '1';
     afficherGabarits();
-    genererOperationsPourMois(moisActuel, anneeActuelle);
+    // Génération automatique pour le mois courant (si pas déjà supprimée)
+    await genererOperationsPourMois(moisActuel, anneeActuelle);
     afficherToutLivre();
   });
 
@@ -644,11 +673,12 @@
     modalOverlay.classList.remove('active');
   });
 
-  // --- Démarrage SANS Service Worker ---
+  // --- Démarrage (sans Service Worker) ---
   (async () => {
     await openDB();
     await chargerDonnees();
-    genererOperationsPourMois(moisActuel, anneeActuelle);
+    // Générer automatiquement les opérations du mois en cours (en tenant compte des suppressions)
+    await genererOperationsPourMois(moisActuel, anneeActuelle);
     trierOperations();
     afficherToutLivre();
     afficherGabarits();
