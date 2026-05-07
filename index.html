@@ -59,11 +59,11 @@
       padding: 8px 12px;
       margin-bottom: 8px;
     }
+    .solde-reel-line { display: flex; align-items: center; gap: 6px; }
     .solde-reel { font-size: 0.85rem; }
-    .reste-a-vivre { font-size: 1.3rem; font-weight: bold; }
+    .reste-a-vivre { font-size: 1.3rem; font-weight: bold; margin-top: 4px; display: block; }
     .positif { color: #1e5d3f; }
     .negatif { color: #b00020; }
-    .rest-container { display: flex; align-items: center; gap: 6px; }
     .edit-icon { cursor: pointer; font-size: 1rem; }
     .ajustement-input { margin-top: 6px; display: none; gap: 6px; align-items: center; }
     .ajustement-input input { width: 100px; padding: 4px; }
@@ -74,6 +74,7 @@
       text-align: center; margin: 8px 0; display: flex; justify-content: center; align-items: center; gap: 10px;
     }
     .mois-selector button { background: none; border: 1px solid #aaa; border-radius: 4px; padding: 4px 8px; cursor: pointer; }
+    .mois-selector button:disabled { opacity: 0.4; cursor: not-allowed; }
     .mois-selector span { font-weight: 600; min-width: 110px; display: inline-block; }
 
     .table-wrapper { overflow-x: auto; margin-bottom: 12px; border: 1px solid #c0b8a0; border-radius: 4px; background: white; }
@@ -156,9 +157,8 @@
       <span>⚙️</span>
     </div>
     <div class="soldes">
-      <div class="solde-reel" id="solde-reel">Solde réel : 0,00 €</div>
-      <div class="rest-container">
-        <span class="reste-a-vivre" id="reste-a-vivre">Reste à vivre : 0,00 €</span>
+      <div class="solde-reel-line">
+        <span class="solde-reel" id="solde-reel">Solde réel : 0,00 €</span>
         <span class="edit-icon" id="btn-edit-ajustement">✏️</span>
         <span class="indicateur-ajustement" id="ajustement-indicator">(ajusté)</span>
       </div>
@@ -167,6 +167,7 @@
         <button id="btn-apply-ajustement">Appliquer</button>
         <button id="btn-reset-ajustement">Réinit.</button>
       </div>
+      <span class="reste-a-vivre" id="reste-a-vivre">Reste à vivre : 0,00 €</span>
     </div>
 
     <div class="mois-selector">
@@ -321,7 +322,7 @@
   let prochainIdGab = 1;
   let moisActuel = new Date().getMonth();
   let anneeActuelle = new Date().getFullYear();
-  let ajustementResteAVivre = 0;
+  let ajustementSoldeReel = 0; // Ajustement du solde réel
 
   async function chargerDonnees() {
     const ops = await readAll('operations');
@@ -330,14 +331,14 @@
     operations = ops;
     gabarits = gabs;
     if (ajust.length > 0) {
-      ajustementResteAVivre = ajust.find(a => a.cle === 'global')?.valeur || 0;
+      ajustementSoldeReel = ajust.find(a => a.cle === 'soldeReel')?.valeur || 0;
     }
     prochainIdOp = operations.reduce((max, op) => Math.max(max, op.id), 0) + 1;
     prochainIdGab = gabarits.reduce((max, g) => Math.max(max, g.id), 0) + 1;
   }
 
-  async function sauvegarderAjustement() {
-    await writeRecord('ajustement', { cle: 'global', valeur: ajustementResteAVivre });
+  async function sauvegarderAjustementSolde() {
+    await writeRecord('ajustement', { cle: 'soldeReel', valeur: ajustementSoldeReel });
   }
 
   // --- Gestion des suppressions de gabarits ---
@@ -355,17 +356,17 @@
     });
   }
 
-  // --- Génération des opérations récurrentes (appelée automatiquement) ---
+  // --- Génération des opérations récurrentes ---
   async function genererOperationsPourMois(mois, annee) {
     const moisStr = `${annee}-${String(mois+1).padStart(2,'0')}`;
     const existantes = operations.filter(op => op.moisGeneration === moisStr && op.gabaritId);
     const idsExistants = existantes.map(op => op.gabaritId);
 
     for (const gab of gabarits) {
-      if (idsExistants.includes(gab.id)) continue; // déjà généré
+      if (idsExistants.includes(gab.id)) continue;
       const cleSuppr = `gabarit_${gab.id}_${moisStr}`;
       const dejaSupprime = await readSuppression(cleSuppr);
-      if (dejaSupprime) continue; // supprimé manuellement pour ce mois
+      if (dejaSupprime) continue;
 
       const dernierJour = new Date(annee, mois+1, 0).getDate();
       const jour = Math.min(gab.jour, dernierJour);
@@ -398,12 +399,22 @@
     });
   }
 
-  function calculerRestes() {
-    const soldeReel = operations.filter(op => op.pointe).reduce((sum, op) => sum + (op.type === 'revenu' ? op.montant : -op.montant), 0);
+  function calculerSoldes() {
+    // Solde réel pointé
+    const soldeReelPointes = operations
+      .filter(op => op.pointe)
+      .reduce((sum, op) => sum + (op.type === 'revenu' ? op.montant : -op.montant), 0);
+    const soldeReelAjuste = soldeReelPointes + ajustementSoldeReel;
+
+    // Dépenses non pointées du mois en cours
     const opsDuMois = filtrerOperationsParMois(moisActuel, anneeActuelle);
-    const revenusPrevus = opsDuMois.filter(op => !op.pointe && op.type === 'revenu').reduce((s, op) => s + op.montant, 0);
-    const depensesPrevues = opsDuMois.filter(op => !op.pointe && op.type === 'depense').reduce((s, op) => s + op.montant, 0);
-    return { soldeReel, resteAVivre: soldeReel + revenusPrevus - depensesPrevues + ajustementResteAVivre };
+    const depensesNonPointees = opsDuMois
+      .filter(op => !op.pointe && op.type === 'depense')
+      .reduce((s, op) => s + op.montant, 0);
+
+    const resteAVivre = soldeReelAjuste - depensesNonPointees;
+
+    return { soldeReelAjuste, resteAVivre };
   }
 
   function calculerSoldesProgressifs(listeOps) {
@@ -448,7 +459,6 @@
         });
       });
 
-      // Suppression avec mémorisation pour les opérations récurrentes
       document.querySelectorAll('.btn-supprimer-op').forEach(btn => {
         btn.addEventListener('click', async function(e) {
           e.stopPropagation();
@@ -469,12 +479,13 @@
 
     document.getElementById('mois-courant-livre').textContent = 
       new Date(anneeActuelle, moisActuel).toLocaleDateString('fr-FR', {month:'long', year:'numeric'});
-    const { soldeReel, resteAVivre } = calculerRestes();
-    document.getElementById('solde-reel').textContent = `Solde réel : ${soldeReel.toFixed(2)} €`;
+
+    const { soldeReelAjuste, resteAVivre } = calculerSoldes();
+    document.getElementById('solde-reel').textContent = `Solde réel : ${soldeReelAjuste.toFixed(2)} €`;
     const resteEl = document.getElementById('reste-a-vivre');
     resteEl.textContent = `Reste à vivre : ${resteAVivre.toFixed(2)} €`;
     resteEl.className = 'reste-a-vivre ' + (resteAVivre >= 0 ? 'positif' : 'negatif');
-    document.getElementById('ajustement-indicator').style.display = (ajustementResteAVivre !== 0) ? 'inline' : 'none';
+    document.getElementById('ajustement-indicator').style.display = (ajustementSoldeReel !== 0) ? 'inline' : 'none';
   }
 
   function afficherToutLivre() {
@@ -482,41 +493,62 @@
     afficherLivre();
   }
 
-  // --- Ajustement ---
+  // --- Ajustement du solde réel ---
   document.getElementById('btn-edit-ajustement').addEventListener('click', () => {
     document.getElementById('ajustement-input-container').style.display = 'flex';
-    document.getElementById('ajustement-montant').value = ajustementResteAVivre || '';
+    document.getElementById('ajustement-montant').value = ajustementSoldeReel || '';
     document.getElementById('ajustement-montant').focus();
   });
   document.getElementById('btn-apply-ajustement').addEventListener('click', async () => {
     const val = parseFloat(document.getElementById('ajustement-montant').value);
     if (isNaN(val)) { alert('Valeur invalide'); return; }
-    ajustementResteAVivre = val;
-    await sauvegarderAjustement();
+    ajustementSoldeReel = val;
+    await sauvegarderAjustementSolde();
     document.getElementById('ajustement-input-container').style.display = 'none';
     afficherToutLivre();
   });
   document.getElementById('btn-reset-ajustement').addEventListener('click', async () => {
-    ajustementResteAVivre = 0;
-    await sauvegarderAjustement();
+    ajustementSoldeReel = 0;
+    await sauvegarderAjustementSolde();
     document.getElementById('ajustement-montant').value = '';
     document.getElementById('ajustement-input-container').style.display = 'none';
     afficherToutLivre();
   });
 
-  // --- Mois ---
-  document.getElementById('mois-precedent').addEventListener('click', async () => {
-    moisActuel--;
-    if (moisActuel < 0) { moisActuel = 11; anneeActuelle--; }
-    await genererOperationsPourMois(moisActuel, anneeActuelle);
-    afficherToutLivre();
+  // --- Mois (robuste) ---
+  const btnPrev = document.getElementById('mois-precedent');
+  const btnNext = document.getElementById('mois-suivant');
+
+  btnPrev.addEventListener('click', async function() {
+    this.disabled = true;
+    try {
+      moisActuel--;
+      if (moisActuel < 0) { moisActuel = 11; anneeActuelle--; }
+      await genererOperationsPourMois(moisActuel, anneeActuelle);
+      afficherToutLivre();
+    } catch (err) {
+      console.error('Erreur mois précédent :', err);
+      alert('Une erreur est survenue. Veuillez réessayer.');
+    } finally {
+      this.disabled = false;
+    }
   });
-  document.getElementById('mois-suivant').addEventListener('click', async () => {
-    moisActuel++;
-    if (moisActuel > 11) { moisActuel = 0; anneeActuelle++; }
-    await genererOperationsPourMois(moisActuel, anneeActuelle);
-    afficherToutLivre();
+
+  btnNext.addEventListener('click', async function() {
+    this.disabled = true;
+    try {
+      moisActuel++;
+      if (moisActuel > 11) { moisActuel = 0; anneeActuelle++; }
+      await genererOperationsPourMois(moisActuel, anneeActuelle);
+      afficherToutLivre();
+    } catch (err) {
+      console.error('Erreur mois suivant :', err);
+      alert('Une erreur est survenue. Veuillez réessayer.');
+    } finally {
+      this.disabled = false;
+    }
   });
+
   document.getElementById('btn-generer').addEventListener('click', async () => {
     await genererOperationsPourMois(moisActuel, anneeActuelle);
     afficherToutLivre();
@@ -566,7 +598,6 @@
     document.getElementById('gabarit-montant').value = '';
     document.getElementById('gabarit-jour').value = '1';
     afficherGabarits();
-    // Génération automatique pour le mois courant (si pas déjà supprimée)
     await genererOperationsPourMois(moisActuel, anneeActuelle);
     afficherToutLivre();
   });
@@ -673,11 +704,10 @@
     modalOverlay.classList.remove('active');
   });
 
-  // --- Démarrage (sans Service Worker) ---
+  // --- Démarrage ---
   (async () => {
     await openDB();
     await chargerDonnees();
-    // Générer automatiquement les opérations du mois en cours (en tenant compte des suppressions)
     await genererOperationsPourMois(moisActuel, anneeActuelle);
     trierOperations();
     afficherToutLivre();
