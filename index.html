@@ -78,7 +78,7 @@
     .mois-selector span { font-weight: 600; min-width: 110px; display: inline-block; }
 
     .table-wrapper { overflow-x: auto; margin-bottom: 12px; border: 1px solid #c0b8a0; border-radius: 4px; background: white; }
-    table { width: 100%; border-collapse: collapse; min-width: 580px; }
+    table { width: 100%; border-collapse: collapse; min-width: 650px; }
     th {
       background: #f3efe5; font-weight: 600; font-size: 0.75rem; text-transform: uppercase;
       padding: 8px 4px; border-bottom: 2px solid #b0a58c;
@@ -89,7 +89,7 @@
     .debit { color: #b00020; }
     .credit { color: #1e5d3f; }
     .pointe-checkbox { width: 18px; height: 18px; cursor: pointer; accent-color: #1e5d3f; }
-    .btn-supprimer-op {
+    .btn-supprimer-op, .btn-modifier-op {
       background: none;
       border: none;
       font-size: 1.2rem;
@@ -97,6 +97,7 @@
       padding: 2px 5px;
       line-height: 1;
     }
+    .btn-modifier-op { font-size: 1rem; margin-right: 4px; }
 
     .btn-ajout, .btn-generer {
       width: 100%; padding: 12px; font-size: 0.95rem; border: 1px solid #8b7d6b;
@@ -188,6 +189,7 @@
             <th class="text-right">Crédit</th>
             <th class="text-right">Solde</th>
             <th class="text-center">Pointé</th>
+            <th class="text-center">Mod.</th>
             <th class="text-center">Suppr.</th>
           </tr>
         </thead>
@@ -399,15 +401,12 @@
     });
   }
 
-  // ✅ Nouveau calcul : cumul des opérations non pointées jusqu’au mois affiché
   function calculerSoldes() {
-    // Solde réel pointé + ajustement
     const soldeReelPointes = operations
       .filter(op => op.pointe)
       .reduce((sum, op) => sum + (op.type === 'revenu' ? op.montant : -op.montant), 0);
     const soldeActuel = soldeReelPointes + ajustementSoldeReel;
 
-    // Opérations non pointées dont la date est ≤ fin du mois actuel
     const cumulNonPointees = operations
       .filter(op => !op.pointe)
       .filter(op => {
@@ -432,7 +431,7 @@
     const corps = document.getElementById('corps-table');
     corps.innerHTML = '';
     if (opsDuMois.length === 0) {
-      corps.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:20px;">Aucune opération ce mois</td></tr>`;
+      corps.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:20px;">Aucune opération ce mois</td></tr>`;
     } else {
       opsDuMois.forEach((op, idx) => {
         const solde = soldesLignes[idx];
@@ -446,11 +445,13 @@
           <td class="text-right credit">${op.type==='revenu' ? op.montant.toFixed(2)+' €' : ''}</td>
           <td class="text-right" style="font-weight:500;">${solde.toFixed(2)} €</td>
           <td class="text-center"><input type="checkbox" class="pointe-checkbox" data-id="${op.id}" ${op.pointe ? 'checked' : ''}></td>
+          <td class="text-center"><button class="btn-modifier-op" data-id="${op.id}" title="Modifier le montant">✏️</button></td>
           <td class="text-center"><button class="btn-supprimer-op" data-id="${op.id}">🗑️</button></td>
         `;
         corps.appendChild(tr);
       });
 
+      // Gestionnaires pointage
       document.querySelectorAll('.pointe-checkbox').forEach(cb => {
         cb.addEventListener('change', async function(e) {
           const id = parseInt(this.dataset.id);
@@ -463,6 +464,7 @@
         });
       });
 
+      // Gestionnaires suppression
       document.querySelectorAll('.btn-supprimer-op').forEach(btn => {
         btn.addEventListener('click', async function(e) {
           e.stopPropagation();
@@ -477,6 +479,26 @@
             operations = operations.filter(op => op.id !== id);
             afficherToutLivre();
           }
+        });
+      });
+
+      // Gestionnaires modification de montant
+      document.querySelectorAll('.btn-modifier-op').forEach(btn => {
+        btn.addEventListener('click', async function(e) {
+          e.stopPropagation();
+          const id = parseInt(this.dataset.id);
+          const op = operations.find(o => o.id === id);
+          if (!op) return;
+          const nouveauMontant = prompt('Nouveau montant (€) pour cette opération :', op.montant.toFixed(2));
+          if (nouveauMontant === null) return; // annulé
+          const val = parseFloat(nouveauMontant.replace(',', '.'));
+          if (isNaN(val) || val <= 0) {
+            alert('Montant invalide.');
+            return;
+          }
+          op.montant = val;
+          await writeRecord('operations', op);
+          afficherToutLivre();
         });
       });
     }
