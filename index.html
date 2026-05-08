@@ -322,7 +322,7 @@
   let prochainIdGab = 1;
   let moisActuel = new Date().getMonth();
   let anneeActuelle = new Date().getFullYear();
-  let ajustementSoldeReel = 0; // Ajustement du solde réel
+  let ajustementSoldeReel = 0;
 
   async function chargerDonnees() {
     const ops = await readAll('operations');
@@ -406,13 +406,20 @@
       .reduce((sum, op) => sum + (op.type === 'revenu' ? op.montant : -op.montant), 0);
     const soldeReelAjuste = soldeReelPointes + ajustementSoldeReel;
 
-    // Dépenses non pointées du mois en cours
+    // Opérations du mois en cours
     const opsDuMois = filtrerOperationsParMois(moisActuel, anneeActuelle);
+
+    // Crédits non pointés du mois
+    const creditsNonPointees = opsDuMois
+      .filter(op => !op.pointe && op.type === 'revenu')
+      .reduce((s, op) => s + op.montant, 0);
+
+    // Dépenses non pointées du mois
     const depensesNonPointees = opsDuMois
       .filter(op => !op.pointe && op.type === 'depense')
       .reduce((s, op) => s + op.montant, 0);
 
-    const resteAVivre = soldeReelAjuste - depensesNonPointees;
+    const resteAVivre = soldeReelAjuste + creditsNonPointees - depensesNonPointees;
 
     return { soldeReelAjuste, resteAVivre };
   }
