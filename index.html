@@ -399,27 +399,26 @@
     });
   }
 
-  // ✅ Nouvelle fonction calculerSoldes : prend toutes les opérations non pointées
+  // ✅ Nouveau calcul : cumul des opérations non pointées jusqu’au mois affiché
   function calculerSoldes() {
-    // Solde réel pointé
+    // Solde réel pointé + ajustement
     const soldeReelPointes = operations
       .filter(op => op.pointe)
       .reduce((sum, op) => sum + (op.type === 'revenu' ? op.montant : -op.montant), 0);
-    const soldeReelAjuste = soldeReelPointes + ajustementSoldeReel;
+    const soldeActuel = soldeReelPointes + ajustementSoldeReel;
 
-    // TOUS les crédits non pointés (quel que soit le mois)
-    const creditsNonPointees = operations
-      .filter(op => !op.pointe && op.type === 'revenu')
-      .reduce((s, op) => s + op.montant, 0);
+    // Opérations non pointées dont la date est ≤ fin du mois actuel
+    const cumulNonPointees = operations
+      .filter(op => !op.pointe)
+      .filter(op => {
+        const d = new Date(op.date);
+        return (d.getFullYear() < anneeActuelle) ||
+               (d.getFullYear() === anneeActuelle && d.getMonth() <= moisActuel);
+      })
+      .reduce((sum, op) => sum + (op.type === 'revenu' ? op.montant : -op.montant), 0);
 
-    // TOUTES les dépenses non pointées (quel que soit le mois)
-    const depensesNonPointees = operations
-      .filter(op => !op.pointe && op.type === 'depense')
-      .reduce((s, op) => s + op.montant, 0);
-
-    const resteAVivre = soldeReelAjuste + creditsNonPointees - depensesNonPointees;
-
-    return { soldeReelAjuste, resteAVivre };
+    const resteAVivre = soldeActuel + cumulNonPointees;
+    return { soldeReelAjuste: soldeActuel, resteAVivre };
   }
 
   function calculerSoldesProgressifs(listeOps) {
