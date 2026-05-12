@@ -51,7 +51,7 @@
     .pointe-checkbox { width: 18px; height: 18px; cursor: pointer; accent-color: #1e5d3f; }
     .btn-supprimer-op, .btn-modifier-op { background: none; border: none; font-size: 1.1rem; cursor: pointer; padding: 2px 5px; line-height: 1; }
 
-    /* Regroupement récurrent */
+    /* Regroupement unique des opérations récurrentes */
     tr.recurrente { border-left: 3px solid #222; border-right: 3px solid #222; background: #f9f9f4; }
     tr.recurrente-first { border-top: 3px solid #222; }
     tr.recurrente-last { border-bottom: 3px solid #222; }
@@ -182,12 +182,11 @@
   function trierOperations(){operations.sort((a,b)=>new Date(a.date)-new Date(b.date));}
   function filtrerOperationsParMois(mois,annee){return operations.filter(op=>{const d=new Date(op.date);return d.getFullYear()===annee&&d.getMonth()===mois;});}
 
-  // ✅ Nouveau calcul : cumul uniquement des opérations NON pointées depuis le début du suivi
+  // Cumul des opérations NON pointées depuis le début du suivi jusqu'à la fin du mois affiché
   function calculerSoldesEtOpsFiltrees() {
     const soldeReelPointes = operations.filter(op => op.pointe).reduce((s, op) => s + (op.type === 'revenu' ? op.montant : -op.montant), 0);
     const soldeActuel = soldeReelPointes + ajustementSoldeReel;
 
-    // Déterminer le premier mois contenant au moins une opération (pointée ou non)
     let premierMois = { annee: anneeActuelle, mois: moisActuel };
     if (operations.length > 0) {
       const opsTriees = [...operations].sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -195,9 +194,8 @@
       premierMois = { annee: d.getFullYear(), mois: d.getMonth() };
     }
 
-    // Opérations NON pointées depuis ce premier mois jusqu'à la fin du mois affiché
     const opsNonPointees = operations.filter(op => {
-      if (op.pointe) return false; // on ignore les pointées pour le cumul
+      if (op.pointe) return false;
       const d = new Date(op.date);
       if (d.getFullYear() < premierMois.annee || (d.getFullYear() === premierMois.annee && d.getMonth() < premierMois.mois)) return false;
       if (d.getFullYear() > anneeActuelle || (d.getFullYear() === anneeActuelle && d.getMonth() > moisActuel)) return false;
@@ -209,7 +207,6 @@
     return { soldeActuel, resteAVivre, opsNonPointees };
   }
 
-  // Renvoie le solde progressif selon les opérations non pointées uniquement
   function getSoldeProgressif(op, soldeActuel, opsNonPointees) {
     let cumul = 0;
     for (let o of opsNonPointees) {
@@ -229,14 +226,16 @@
     if (opsDuMois.length === 0) {
       corps.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:20px;">Aucune opération ce mois</td></tr>`;
     } else {
-      opsDuMois.forEach((op, idx) => {
-        // Pour les opérations pointées, le solde affiché est le même que le reste à vivre final (car elles n'impactent plus le cumul)
-        // Pour les non pointées, on calcule le solde progressif
+      // Séparer récurrentes et ponctuelles, triées par date
+      const recurrentes = opsDuMois.filter(op => op.gabaritId).sort((a,b)=>new Date(a.date)-new Date(b.date));
+      const ponctuelles = opsDuMois.filter(op => !op.gabaritId).sort((a,b)=>new Date(a.date)-new Date(b.date));
+      // Ordre final : récurrentes d'abord, puis ponctuelles
+      const opsAffichees = [...recurrentes, ...ponctuelles];
+
+      opsAffichees.forEach((op, idx) => {
         let soldeLigne;
         if (op.pointe) {
-          // Une opération pointée n'est plus dans opsNonPointees, donc le solde reste le même que le précédent
-          // On utilise le cumul des non pointées jusqu'à la date de l'opération précédente
-          // On va chercher le solde après la dernière opération non pointée avant cette date
+          // Pour une opération pointée, on donne le solde après prise en compte des non pointées jusqu'à sa date
           const opsAvant = opsNonPointees.filter(o => new Date(o.date) <= new Date(op.date));
           soldeLigne = soldeActuel + opsAvant.reduce((s, o) => s + (o.type === 'revenu' ? o.montant : -o.montant), 0);
         } else {
@@ -246,9 +245,11 @@
         const tr = document.createElement('tr');
         if (op.gabaritId) {
           tr.classList.add('recurrente');
-          if (idx === 0 || !opsDuMois[idx-1].gabaritId) tr.classList.add('recurrente-first');
-          if (idx === opsDuMois.length-1 || !opsDuMois[idx+1]?.gabaritId) tr.classList.add('recurrente-last');
+          // Déterminer si c'est la première ou la dernière du bloc récurrent
+          if (idx === 0 || !opsAffichees[idx-1].gabaritId) tr.classList.add('recurrente-first');
+          if (idx === opsAffichees.length-1 || !opsAffichees[idx+1]?.gabaritId) tr.classList.add('recurrente-last');
         }
+
         tr.innerHTML = `
           <td>${new Date(op.date).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'2-digit'})}</td>
           <td><strong>${op.libelle}</strong>${op.gabaritId?' 🔁':''}</td>
@@ -264,6 +265,7 @@
         corps.appendChild(tr);
       });
 
+      // Gestionnaires d'événements
       document.querySelectorAll('.pointe-checkbox').forEach(cb => {
         cb.addEventListener('change', async function() {
           const id = parseInt(this.dataset.id);
