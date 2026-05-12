@@ -62,6 +62,10 @@
     .solde-reel-line { display: flex; align-items: center; gap: 6px; }
     .solde-reel { font-size: 0.85rem; }
     .reste-a-vivre { font-size: 1.3rem; font-weight: bold; margin-top: 4px; display: block; }
+    .reste-bar-container { height: 6px; background: #ddd; margin-top: 4px; border-radius: 3px; overflow: hidden; }
+    .reste-bar { height: 100%; border-radius: 3px; transition: width 0.3s; }
+    .reste-bar.positif { background: #1e5d3f; }
+    .reste-bar.negatif { background: #b00020; }
     .positif { color: #1e5d3f; }
     .negatif { color: #b00020; }
     .edit-icon { cursor: pointer; font-size: 1rem; }
@@ -80,10 +84,10 @@
     .table-wrapper { overflow-x: auto; margin-bottom: 12px; border: 1px solid #c0b8a0; border-radius: 4px; background: white; }
     table { width: 100%; border-collapse: collapse; min-width: 650px; }
     th {
-      background: #f3efe5; font-weight: 600; font-size: 0.75rem; text-transform: uppercase;
-      padding: 8px 4px; border-bottom: 2px solid #b0a58c;
+      background: #f3efe5; font-weight: 600; font-size: 0.7rem; text-transform: uppercase;
+      padding: 8px 2px; border-bottom: 2px solid #b0a58c;
     }
-    td { padding: 6px 4px; border-bottom: 1px solid #ddd6c8; font-size: 0.8rem; }
+    td { padding: 6px 2px; border-bottom: 1px solid #ddd6c8; font-size: 0.75rem; vertical-align: middle; }
     .text-right { text-align: right; }
     .text-center { text-align: center; }
     .debit { color: #b00020; }
@@ -92,18 +96,35 @@
     .btn-supprimer-op, .btn-modifier-op {
       background: none;
       border: none;
-      font-size: 1.2rem;
+      font-size: 1.1rem;
       cursor: pointer;
       padding: 2px 5px;
       line-height: 1;
     }
-    .btn-modifier-op { font-size: 1rem; margin-right: 4px; }
 
-    .btn-ajout, .btn-generer {
+    /* Style pour les opérations récurrentes */
+    tr.recurrente {
+      border-left: 3px solid #333;
+      border-right: 3px solid #333;
+      background: #fafaf7;
+    }
+    tr.recurrente td {
+      border-bottom: 1px solid #ddd;
+    }
+    tr.recurrente + tr:not(.recurrente) {
+      border-top: 3px solid #333;
+    }
+    /* Bordure supérieure pour le premier bloc récurrent */
+    tr.recurrente-first {
+      border-top: 3px solid #333;
+    }
+
+    .btn-ajout, .btn-generer, .btn-supprimer-tout {
       width: 100%; padding: 12px; font-size: 0.95rem; border: 1px solid #8b7d6b;
       background: #f3efe5; color: #333; border-radius: 4px; cursor: pointer; font-weight: 500; margin-top: 6px;
     }
-    .btn-ajout:hover, .btn-generer:hover { background: #e6dfcc; }
+    .btn-ajout:hover, .btn-generer:hover, .btn-supprimer-tout:hover { background: #e6dfcc; }
+    .btn-supprimer-tout { color: #b00020; border-color: #b00020; font-size: 0.85rem; }
 
     /* Modal */
     .modal-overlay {
@@ -169,6 +190,9 @@
         <button id="btn-reset-ajustement">Réinit.</button>
       </div>
       <span class="reste-a-vivre" id="reste-a-vivre">Reste à vivre : 0,00 €</span>
+      <div class="reste-bar-container">
+        <div class="reste-bar" id="reste-bar" style="width: 50%;"></div>
+      </div>
     </div>
 
     <div class="mois-selector">
@@ -199,6 +223,7 @@
 
     <button class="btn-ajout" id="btn-ajout">+ Nouvelle opération</button>
     <button class="btn-generer" id="btn-generer">🔄 Générer opérations récurrentes du mois</button>
+    <button class="btn-supprimer-tout" id="btn-supprimer-tout">🗑️ Supprimer toutes les opérations de ce mois</button>
   </div>
 
   <!-- Gabarits -->
@@ -244,7 +269,7 @@
     <div class="analyse-resume" id="analyse-resultat"></div>
   </div>
 
-  <!-- Modal opération -->
+  <!-- Modal création d'opération -->
   <div class="modal-overlay" id="modal-overlay">
     <div class="modal">
       <h3>Nouvelle opération</h3>
@@ -263,6 +288,30 @@
       <div class="btn-group">
         <button class="btn-cancel" id="btn-cancel">Annuler</button>
         <button class="btn-save" id="btn-save">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal modification d'une opération -->
+  <div class="modal-overlay" id="modal-modifier-overlay">
+    <div class="modal">
+      <h3>Modifier l'opération</h3>
+      <input type="hidden" id="modif-id">
+      <label for="modif-date">Date</label>
+      <input type="date" id="modif-date">
+      <label for="modif-type">Type</label>
+      <select id="modif-type"><option value="depense">Dépense</option><option value="revenu">Revenu</option></select>
+      <label for="modif-libelle">Libellé</label>
+      <input type="text" id="modif-libelle">
+      <label for="modif-categorie">Catégorie</label>
+      <select id="modif-categorie"><option>Alimentation</option><option>Logement</option><option>Transport</option><option>Loisirs</option><option>Salaire</option><option>Autres revenus</option><option>Santé</option><option>Divers</option></select>
+      <label for="modif-mode">Mode</label>
+      <select id="modif-mode"><option>CB</option><option>Prélèvement</option><option>Virement</option><option>Chèque</option><option>Espèces</option></select>
+      <label for="modif-montant">Montant (€)</label>
+      <input type="number" id="modif-montant" step="0.01" min="0.01">
+      <div class="btn-group">
+        <button class="btn-cancel" id="btn-modif-cancel">Annuler</button>
+        <button class="btn-save" id="btn-modif-save">Enregistrer</button>
       </div>
     </div>
   </div>
@@ -317,6 +366,15 @@
     });
   }
 
+  function clearStore(storeName) {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(storeName, 'readwrite');
+      tx.objectStore(storeName).clear();
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
   // --- État global ---
   let operations = [];
   let gabarits = [];
@@ -343,7 +401,6 @@
     await writeRecord('ajustement', { cle: 'soldeReel', valeur: ajustementSoldeReel });
   }
 
-  // --- Gestion des suppressions de gabarits ---
   async function writeSuppression(cle) {
     await writeRecord('suppressions', { cle });
   }
@@ -358,7 +415,6 @@
     });
   }
 
-  // --- Génération des opérations récurrentes ---
   async function genererOperationsPourMois(mois, annee) {
     const moisStr = `${annee}-${String(mois+1).padStart(2,'0')}`;
     const existantes = operations.filter(op => op.moisGeneration === moisStr && op.gabaritId);
@@ -407,51 +463,121 @@
       .reduce((sum, op) => sum + (op.type === 'revenu' ? op.montant : -op.montant), 0);
     const soldeActuel = soldeReelPointes + ajustementSoldeReel;
 
-    const cumulNonPointees = operations
-      .filter(op => !op.pointe)
+    const opsPointees = operations.filter(op => op.pointe);
+    let premierMoisAvecPointage = { annee: anneeActuelle, mois: moisActuel };
+    if (opsPointees.length > 0) {
+      opsPointees.sort((a, b) => new Date(a.date) - new Date(b.date));
+      const d = new Date(opsPointees[0].date);
+      premierMoisAvecPointage = { annee: d.getFullYear(), mois: d.getMonth() };
+    }
+
+    const cumulToutesOps = operations
       .filter(op => {
         const d = new Date(op.date);
-        return (d.getFullYear() < anneeActuelle) ||
-               (d.getFullYear() === anneeActuelle && d.getMonth() <= moisActuel);
+        if (d.getFullYear() < premierMoisAvecPointage.annee) return false;
+        if (d.getFullYear() === premierMoisAvecPointage.annee && d.getMonth() < premierMoisAvecPointage.mois) return false;
+        if (d.getFullYear() > anneeActuelle) return false;
+        if (d.getFullYear() === anneeActuelle && d.getMonth() > moisActuel) return false;
+        return true;
       })
       .reduce((sum, op) => sum + (op.type === 'revenu' ? op.montant : -op.montant), 0);
 
-    const resteAVivre = soldeActuel + cumulNonPointees;
+    const resteAVivre = soldeActuel + cumulToutesOps;
     return { soldeReelAjuste: soldeActuel, resteAVivre };
   }
 
-  function calculerSoldesProgressifs(listeOps) {
-    let solde = 0;
-    return listeOps.map(op => { solde += (op.type === 'revenu' ? op.montant : -op.montant); return solde; });
+  // Calcule le solde progressif en tenant compte de TOUTES les opérations jusqu'à la date
+  function calculerSoldeProgressifGlobal(listeOps) {
+    // Partir du solde actuel (pointé + ajustement)
+    const soldeReelPointes = operations
+      .filter(op => op.pointe)
+      .reduce((sum, op) => sum + (op.type === 'revenu' ? op.montant : -op.montant), 0);
+    let soldeProgressif = soldeReelPointes + ajustementSoldeReel;
+
+    // Appliquer toutes les opérations non pointées dans l'ordre chronologique
+    const toutesOps = operations
+      .filter(op => !op.pointe)
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    // Pour chaque ligne du mois, on veut le solde après toutes les opérations jusqu'à cette ligne
+    // On reconstruit le tableau des soldes progressifs
+    const soldes = [];
+    let idxNonPointee = 0;
+
+    for (const op of listeOps) {
+      if (!op.pointe) {
+        // Avant cette opération, appliquer toutes les opérations non pointées antérieures déjà passées
+        // Ici on simplifie : on parcourt tout, on cumule les non pointées jusqu'à la date de l'opération courante
+        const cumulJusquaDate = operations
+          .filter(o => !o.pointe && new Date(o.date) <= new Date(op.date))
+          .reduce((sum, o) => sum + (o.type === 'revenu' ? o.montant : -o.montant), 0);
+        soldes.push(soldeReelPointes + ajustementSoldeReel + cumulJusquaDate);
+      } else {
+        soldes.push(soldeReelPointes + ajustementSoldeReel);
+      }
+    }
+    return soldes;
   }
 
   function afficherLivre() {
     const opsDuMois = filtrerOperationsParMois(moisActuel, anneeActuelle);
-    const soldesLignes = calculerSoldesProgressifs(opsDuMois);
     const corps = document.getElementById('corps-table');
     corps.innerHTML = '';
+
     if (opsDuMois.length === 0) {
       corps.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:20px;">Aucune opération ce mois</td></tr>`;
     } else {
+      // Calculer le solde progressif global
+      const soldeReelPointes = operations
+        .filter(op => op.pointe)
+        .reduce((sum, op) => sum + (op.type === 'revenu' ? op.montant : -op.montant), 0);
+      const soldeInitial = soldeReelPointes + ajustementSoldeReel;
+
+      // Liste de toutes les opérations non pointées triées par date
+      const nonPointeesTriees = operations
+        .filter(op => !op.pointe)
+        .sort((a, b) => new Date(a.date) - new Date(b.date));
+
       opsDuMois.forEach((op, idx) => {
-        const solde = soldesLignes[idx];
+        // Calculer le solde au moment de cette ligne
+        let soldeLigne;
+        if (op.pointe) {
+          // Pour une opération pointée, le solde ne change pas (déjà inclus dans soldeInitial)
+          soldeLigne = soldeInitial;
+        } else {
+          // Pour une non pointée, on cumule jusqu'à elle
+          const cumulJusqua = nonPointeesTriees
+            .filter(o => new Date(o.date) <= new Date(op.date))
+            .reduce((s, o) => s + (o.type === 'revenu' ? o.montant : -o.montant), 0);
+          soldeLigne = soldeInitial + cumulJusqua;
+        }
+
         const tr = document.createElement('tr');
+        // Style pour les opérations récurrentes
+        if (op.gabaritId) {
+          tr.classList.add('recurrente');
+          // Détecter si c'est la première d'un bloc
+          if (idx === 0 || !opsDuMois[idx-1].gabaritId) {
+            tr.classList.add('recurrente-first');
+          }
+        }
+
         tr.innerHTML = `
-          <td>${new Date(op.date).toLocaleDateString('fr-FR', {day:'2-digit',month:'2-digit'})}</td>
+          <td>${new Date(op.date).toLocaleDateString('fr-FR', {day:'2-digit',month:'2-digit',year:'2-digit'})}</td>
           <td><strong>${op.libelle}</strong>${op.gabaritId ? ' 🔁' : ''}</td>
           <td>${op.categorie}</td>
           <td>${op.mode}</td>
           <td class="text-right debit">${op.type==='depense' ? op.montant.toFixed(2)+' €' : ''}</td>
           <td class="text-right credit">${op.type==='revenu' ? op.montant.toFixed(2)+' €' : ''}</td>
-          <td class="text-right" style="font-weight:500;">${solde.toFixed(2)} €</td>
+          <td class="text-right" style="font-weight:500;">${soldeLigne.toFixed(2)} €</td>
           <td class="text-center"><input type="checkbox" class="pointe-checkbox" data-id="${op.id}" ${op.pointe ? 'checked' : ''}></td>
-          <td class="text-center"><button class="btn-modifier-op" data-id="${op.id}" title="Modifier le montant">✏️</button></td>
+          <td class="text-center"><button class="btn-modifier-op" data-id="${op.id}">✏️</button></td>
           <td class="text-center"><button class="btn-supprimer-op" data-id="${op.id}">🗑️</button></td>
         `;
         corps.appendChild(tr);
       });
 
-      // Gestionnaires pointage
+      // Pointage
       document.querySelectorAll('.pointe-checkbox').forEach(cb => {
         cb.addEventListener('change', async function(e) {
           const id = parseInt(this.dataset.id);
@@ -464,7 +590,7 @@
         });
       });
 
-      // Gestionnaires suppression
+      // Suppression
       document.querySelectorAll('.btn-supprimer-op').forEach(btn => {
         btn.addEventListener('click', async function(e) {
           e.stopPropagation();
@@ -482,23 +608,22 @@
         });
       });
 
-      // Gestionnaires modification de montant
+      // Modification
       document.querySelectorAll('.btn-modifier-op').forEach(btn => {
-        btn.addEventListener('click', async function(e) {
+        btn.addEventListener('click', function(e) {
           e.stopPropagation();
           const id = parseInt(this.dataset.id);
           const op = operations.find(o => o.id === id);
-          if (!op) return;
-          const nouveauMontant = prompt('Nouveau montant (€) pour cette opération :', op.montant.toFixed(2));
-          if (nouveauMontant === null) return; // annulé
-          const val = parseFloat(nouveauMontant.replace(',', '.'));
-          if (isNaN(val) || val <= 0) {
-            alert('Montant invalide.');
-            return;
+          if (op) {
+            document.getElementById('modif-id').value = op.id;
+            document.getElementById('modif-date').value = op.date;
+            document.getElementById('modif-type').value = op.type;
+            document.getElementById('modif-libelle').value = op.libelle;
+            document.getElementById('modif-categorie').value = op.categorie;
+            document.getElementById('modif-mode').value = op.mode;
+            document.getElementById('modif-montant').value = op.montant;
+            document.getElementById('modal-modifier-overlay').classList.add('active');
           }
-          op.montant = val;
-          await writeRecord('operations', op);
-          afficherToutLivre();
         });
       });
     }
@@ -512,6 +637,13 @@
     resteEl.textContent = `Reste à vivre : ${resteAVivre.toFixed(2)} €`;
     resteEl.className = 'reste-a-vivre ' + (resteAVivre >= 0 ? 'positif' : 'negatif');
     document.getElementById('ajustement-indicator').style.display = (ajustementSoldeReel !== 0) ? 'inline' : 'none';
+
+    // Barre proportionnelle
+    const barre = document.getElementById('reste-bar');
+    const maxVal = Math.max(Math.abs(soldeReelAjuste), Math.abs(resteAVivre), 1);
+    const pct = Math.min(100, Math.max(0, (resteAVivre / maxVal) * 50 + 50));
+    barre.style.width = pct + '%';
+    barre.className = 'reste-bar ' + (resteAVivre >= 0 ? 'positif' : 'negatif');
   }
 
   function afficherToutLivre() {
@@ -539,6 +671,53 @@
     document.getElementById('ajustement-montant').value = '';
     document.getElementById('ajustement-input-container').style.display = 'none';
     afficherToutLivre();
+  });
+
+  // --- Modal modification ---
+  document.getElementById('btn-modif-save').addEventListener('click', async () => {
+    const id = parseInt(document.getElementById('modif-id').value);
+    const op = operations.find(o => o.id === id);
+    if (op) {
+      op.date = document.getElementById('modif-date').value;
+      op.type = document.getElementById('modif-type').value;
+      op.libelle = document.getElementById('modif-libelle').value.trim();
+      op.categorie = document.getElementById('modif-categorie').value;
+      op.mode = document.getElementById('modif-mode').value;
+      op.montant = parseFloat(document.getElementById('modif-montant').value);
+      if (!op.libelle || isNaN(op.montant) || op.montant <= 0) { alert('Formulaire invalide'); return; }
+      await writeRecord('operations', op);
+      afficherToutLivre();
+    }
+    document.getElementById('modal-modifier-overlay').classList.remove('active');
+  });
+
+  document.getElementById('btn-modif-cancel').addEventListener('click', () => {
+    document.getElementById('modal-modifier-overlay').classList.remove('active');
+  });
+  document.getElementById('modal-modifier-overlay').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('modal-modifier-overlay')) {
+      document.getElementById('modal-modifier-overlay').classList.remove('active');
+    }
+  });
+
+  // --- Supprimer toutes les opérations du mois ---
+  document.getElementById('btn-supprimer-tout').addEventListener('click', async () => {
+    const opsDuMois = filtrerOperationsParMois(moisActuel, anneeActuelle);
+    if (opsDuMois.length === 0) {
+      alert('Aucune opération à supprimer ce mois.');
+      return;
+    }
+    if (confirm(`Supprimer définitivement les ${opsDuMois.length} opérations de ce mois ?`)) {
+      for (const op of opsDuMois) {
+        if (op.gabaritId) {
+          const moisStr = op.moisGeneration || `${op.date.slice(0,7)}`;
+          await writeSuppression(`gabarit_${op.gabaritId}_${moisStr}`);
+        }
+        await deleteRecord('operations', op.id);
+      }
+      operations = operations.filter(op => !opsDuMois.includes(op));
+      afficherToutLivre();
+    }
   });
 
   // --- Mois (robuste) ---
@@ -576,6 +755,10 @@
   });
 
   document.getElementById('btn-generer').addEventListener('click', async () => {
+    const existantes = filtrerOperationsParMois(moisActuel, anneeActuelle).filter(op => op.gabaritId);
+    if (existantes.length > 0 && !confirm('Des opérations récurrentes existent déjà pour ce mois. Les régénérer ? (les suppressions seront annulées)')) {
+      return;
+    }
     await genererOperationsPourMois(moisActuel, anneeActuelle);
     afficherToutLivre();
   });
@@ -584,7 +767,9 @@
   function afficherGabarits() {
     const liste = document.getElementById('liste-gabarits');
     liste.innerHTML = '';
-    gabarits.forEach(g => {
+    // Trier par jour
+    const sorted = [...gabarits].sort((a, b) => a.jour - b.jour);
+    sorted.forEach(g => {
       const li = document.createElement('li');
       li.className = 'gabarit-item';
       li.innerHTML = `
@@ -703,7 +888,7 @@
     });
   });
 
-  // --- Modal opération ---
+  // --- Modal création d'opération ---
   const modalOverlay = document.getElementById('modal-overlay');
   document.getElementById('btn-ajout').addEventListener('click', () => {
     document.getElementById('form-date').value = new Date().toISOString().slice(0,10);
