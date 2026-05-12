@@ -4,8 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Suivi Bancaire</title>
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#fffcf5">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%231e5d3f'/><text y='.75em' font-size='55' text-anchor='middle' fill='white'>€</text></svg>">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -15,7 +13,7 @@
     .top-bar button { background: #f3efe5; border: 1px solid #c0b8a0; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; color: #333; }
     .search-box { width: 100%; padding: 8px; border: 1px solid #c0b8a0; border-radius: 6px; margin-bottom: 8px; font-size: 0.9rem; background: white; }
     .onglets { display: flex; border-bottom: 2px solid #c0b8a0; margin-bottom: 12px; }
-    .onglet { padding: 8px 12px; cursor: pointer; border-radius: 6px 6px 0 0; background: #e9e6df; margin-right: 4px; font-weight: 500; font-size: 0.85rem; border: 1px solid transparent; border-bottom: none; }
+    .onglet { padding: 8px 12px; cursor: pointer; border-radius: 6px 6px 0 0; background: #e9e6df; margin-right: 4px; font-weight: 500; font-size: 0.85rem; border: 1px solid transparent; border-bottom: none; color: #333; }
     .onglet.actif { background: white; border-color: #c0b8a0; font-weight: 600; }
     .contenu-onglet { display: none; }
     .contenu-onglet.actif { display: block; }
@@ -50,8 +48,8 @@
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 10; }
     .modal-overlay.active { display: flex; }
     .modal { background: white; border-radius: 8px; padding: 16px; width: 320px; max-width: 90%; box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
-    .modal h3 { margin-bottom: 12px; font-size: 1.1rem; }
-    .modal label { display: block; font-size: 0.8rem; margin-top: 8px; margin-bottom: 2px; }
+    .modal h3 { margin-bottom: 12px; font-size: 1.1rem; color: #333; }
+    .modal label { display: block; font-size: 0.8rem; margin-top: 8px; margin-bottom: 2px; color: #333; }
     .modal input, .modal select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem; }
     .btn-group { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
     .btn-save { background: #1e5d3f; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: 600; }
@@ -64,12 +62,8 @@
     .btn-supprimer { background: #b00020; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
     .analyse-resume { background: white; border: 1px solid #c0b8a0; border-radius: 6px; padding: 12px; }
     .filtre-periode { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
-    .filtre-periode select, .filtre-periode input { padding: 6px; border: 1px solid #ccc; border-radius: 4px; }
+    .filtre-periode select { padding: 6px; border: 1px solid #ccc; border-radius: 4px; }
     .filtre-periode button { background: #1e5d3f; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
-    .tutorial-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 20; }
-    .tutorial-overlay.active { display: flex; }
-    .tutorial-box { background: white; border-radius: 12px; padding: 24px; max-width: 350px; text-align: center; }
-    .tutorial-box button { background: #1e5d3f; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 12px; }
   </style>
 </head>
 <body>
@@ -79,7 +73,7 @@
     <button id="save-btn" title="Sauvegarder">💾</button>
     <button id="restore-btn" title="Restaurer">📂</button>
   </div>
-  <input type="text" class="search-box" id="search-input" placeholder="🔍 Rechercher une opération...">
+  <input type="text" class="search-box" id="search-input" placeholder="🔍 Rechercher...">
   <div class="onglets">
     <div class="onglet actif" data-onglet="livre">📖 Livre</div>
     <div class="onglet" data-onglet="gabarits">🗓️ Gabarits</div>
@@ -141,24 +135,18 @@
     <label>Montant</label><input type="number" id="modif-montant" step="0.01" min="0.01">
     <div class="btn-group"><button class="btn-cancel" id="btn-modif-cancel">Annuler</button><button class="btn-save" id="btn-modif-save">Enregistrer</button></div>
   </div></div>
-
-  <div class="tutorial-overlay" id="tutorial-overlay"><div class="tutorial-box">
-    <h2>💰 Bienvenue !</h2>
-    <p>1. Ajoutez vos charges dans <b>Gabarits</b><br>2. Générez le mois dans <b>Livre</b><br>3. Pointez avec votre relevé bancaire</p>
-    <button id="tutorial-ok">Commencer</button>
-  </div></div>
 </div>
 
 <script>
-  const DB_NAME='suivi-bancaire-v2',DB_VERSION=1;let db;
-  function openDB(){return new Promise((r,j)=>{const q=indexedDB.open(DB_NAME,DB_VERSION);q.onupgradeneeded=e=>{const d=e.target.result;d.createObjectStore('operations',{keyPath:'id'});d.createObjectStore('gabarits',{keyPath:'id'});d.createObjectStore('ajustement',{keyPath:'cle'});d.createObjectStore('suppressions',{keyPath:'cle'});};q.onsuccess=e=>{db=e.target.result;r(db);};q.onerror=e=>j(e.target.error);});}
+  const DB_NAME='suivi-bancaire-db',DB_VERSION=1;let db;
+  function openDB(){return new Promise((r,j)=>{const q=indexedDB.open(DB_NAME,DB_VERSION);q.onupgradeneeded=e=>{const d=e.target.result;if(!d.objectStoreNames.contains('operations'))d.createObjectStore('operations',{keyPath:'id'});if(!d.objectStoreNames.contains('gabarits'))d.createObjectStore('gabarits',{keyPath:'id'});if(!d.objectStoreNames.contains('ajustement'))d.createObjectStore('ajustement',{keyPath:'cle'});if(!d.objectStoreNames.contains('suppressions'))d.createObjectStore('suppressions',{keyPath:'cle'});};q.onsuccess=e=>{db=e.target.result;r(db);};q.onerror=e=>j(e.target.error);});}
   function readAll(s){return new Promise(r=>{const t=db.transaction(s,'readonly'),st=t.objectStore(s),q=st.getAll();q.onsuccess=()=>r(q.result||[]);});}
   function writeRecord(s,r){return new Promise(res=>{const t=db.transaction(s,'readwrite');t.objectStore(s).put(r);t.oncomplete=()=>res();});}
   function deleteRecord(s,id){return new Promise(res=>{const t=db.transaction(s,'readwrite');t.objectStore(s).delete(id);t.oncomplete=()=>res();});}
 
   let operations=[],gabarits=[],prochainIdOp=1,prochainIdGab=1,moisActuel=new Date().getMonth(),anneeActuelle=new Date().getFullYear(),ajustementSoldeReel=0,searchTerm='';
 
-  async function chargerDonnees(){const ops=await readAll('operations'),gabs=await readAll('gabarits'),ajust=await readAll('ajustement');operations=ops;gabarits=gabs;if(ajust.length>0)ajustementSoldeReel=ajust.find(a=>a.cle==='soldeReel')?.valeur||0;prochainIdOp=operations.reduce((m,op)=>Math.max(m,op.id),0)+1;prochainIdGab=gabarits.reduce((m,g)=>Math.max(m,g.id),0)+1;}
+  async function chargerDonnees(){const ops=await readAll('operations'),gabs=await readAll('gabarits'),ajust=await readAll('ajustement');operations=ops||[];gabarits=gabs||[];if(ajust.length>0)ajustementSoldeReel=ajust.find(a=>a.cle==='soldeReel')?.valeur||0;prochainIdOp=operations.reduce((m,op)=>Math.max(m,op.id),0)+1;prochainIdGab=gabarits.reduce((m,g)=>Math.max(m,g.id),0)+1;}
   async function sauvegarderAjustementSolde(){await writeRecord('ajustement',{cle:'soldeReel',valeur:ajustementSoldeReel});}
   async function writeSuppression(c){await writeRecord('suppressions',{cle:c});}
   async function readSuppression(c){return new Promise(r=>{const t=db.transaction('suppressions','readonly'),st=t.objectStore('suppressions'),q=st.get(c);q.onsuccess=()=>r(q.result);q.onerror=()=>r(null);});}
@@ -183,4 +171,8 @@
         tr.innerHTML=`<td>${new Date(op.date).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})}</td><td><strong>${op.libelle}</strong>${op.gabaritId?' 🔁':''}</td><td>${op.categorie}</td><td>${op.mode}</td><td class="text-right debit">${op.type==='depense'?op.montant.toFixed(2)+' €':''}</td><td class="text-right credit">${op.type==='revenu'?op.montant.toFixed(2)+' €':''}</td><td class="text-right">${soldeLigne.toFixed(2)} €</td><td class="text-center"><input type="checkbox" class="pointe-checkbox" data-id="${op.id}" ${op.pointe?'checked':''}></td><td class="text-center"><button class="btn-modifier-op" data-id="${op.id}">✏️</button></td><td class="text-center"><button class="btn-supprimer-op" data-id="${op.id}">🗑️</button></td>`;corps.appendChild(tr);});
       document.querySelectorAll('.pointe-checkbox').forEach(cb=>{cb.addEventListener('change',async function(){const id=parseInt(this.dataset.id),op=operations.find(o=>o.id===id);if(op){op.pointe=this.checked;await writeRecord('operations',op);afficherToutLivre();}});});
       document.querySelectorAll('.btn-supprimer-op').forEach(btn=>{btn.addEventListener('click',async function(e){e.stopPropagation();const id=parseInt(this.dataset.id);if(confirm('Supprimer ?')){const op=operations.find(o=>o.id===id);if(op?.gabaritId)await writeSuppression(`gabarit_${op.gabaritId}_${op.moisGeneration||op.date.slice(0,7)}`);await deleteRecord('operations',id);operations=operations.filter(o=>o.id!==id);afficherToutLivre();}});});
-      document.querySelectorAll('.btn-modifier-op').forEach(btn=>{btn.addEventListener('click',function(e){e.stopPropagation();const id=parseInt(this.dataset.id),op=operations.find(o=>o.id===id);if(op){document.getElementById('modif-id').value=op.id;document.getElementById('modif-date').value=op.
+      document.querySelectorAll('.btn-modifier-op').forEach(btn=>{btn.addEventListener('click',function(e){e.stopPropagation();const id=parseInt(this.dataset.id),op=operations.find(o=>o.id===id);if(op){document.getElementById('modif-id').value=op.id;document.getElementById('modif-date').value=op.date;document.getElementById('modif-type').value=op.type;document.getElementById('modif-libelle').value=op.libelle;document.getElementById('modif-categorie').value=op.categorie;document.getElementById('modif-mode').value=op.mode;document.getElementById('modif-montant').value=op.montant;document.getElementById('modal-modifier-overlay').classList.add('active');}});});
+    }
+    document.getElementById('mois-courant-livre').textContent=new Date(anneeActuelle,moisActuel).toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+    document.getElementById('solde-reel').textContent=`Solde réel : ${soldeActuel.toFixed(2)} €`;
+    const resteEl=document.getElementById('reste-a-vivre');resteEl.textContent=`Reste à vivre : ${res
