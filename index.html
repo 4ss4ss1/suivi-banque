@@ -9,7 +9,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: system-ui, -apple-system, sans-serif; background: #f0f0f0; display: flex; justify-content: center; padding: 10px; color: #333; }
     .app { max-width: 600px; width: 100%; background: #fffcf5; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); padding: 12px; font-size: 0.9rem; }
-    .top-bar { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 8px; gap: 6px; }
+    .top-bar { display: flex; justify-content: flex-end; margin-bottom: 8px; gap: 6px; }
     .top-bar button { background: #f3efe5; border: 1px solid #c0b8a0; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; color: #333; }
     .search-box { width: 100%; padding: 8px; border: 1px solid #c0b8a0; border-radius: 6px; margin-bottom: 8px; font-size: 0.9rem; background: white; }
     .onglets { display: flex; border-bottom: 2px solid #c0b8a0; margin-bottom: 12px; }
@@ -67,6 +67,13 @@
   </style>
 </head>
 <body>
+  <!-- 🔧 Nettoyage immédiat des anciens Service Workers -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
+    }
+  </script>
+
 <div class="app" id="app">
   <div class="top-bar">
     <button id="export-btn" title="Exporter CSV">📥 CSV</button>
@@ -138,41 +145,483 @@
 </div>
 
 <script>
-  const DB_NAME='suivi-bancaire-db',DB_VERSION=1;let db;
-  function openDB(){return new Promise((r,j)=>{const q=indexedDB.open(DB_NAME,DB_VERSION);q.onupgradeneeded=e=>{const d=e.target.result;if(!d.objectStoreNames.contains('operations'))d.createObjectStore('operations',{keyPath:'id'});if(!d.objectStoreNames.contains('gabarits'))d.createObjectStore('gabarits',{keyPath:'id'});if(!d.objectStoreNames.contains('ajustement'))d.createObjectStore('ajustement',{keyPath:'cle'});if(!d.objectStoreNames.contains('suppressions'))d.createObjectStore('suppressions',{keyPath:'cle'});};q.onsuccess=e=>{db=e.target.result;r(db);};q.onerror=e=>j(e.target.error);});}
-  function readAll(s){return new Promise(r=>{const t=db.transaction(s,'readonly'),st=t.objectStore(s),q=st.getAll();q.onsuccess=()=>r(q.result||[]);});}
-  function writeRecord(s,r){return new Promise(res=>{const t=db.transaction(s,'readwrite');t.objectStore(s).put(r);t.oncomplete=()=>res();});}
-  function deleteRecord(s,id){return new Promise(res=>{const t=db.transaction(s,'readwrite');t.objectStore(s).delete(id);t.oncomplete=()=>res();});}
+  // --- Base de données (nom stable) ---
+  const DB_NAME = 'suivi-bancaire-db', DB_VERSION = 1;
+  let db;
 
-  let operations=[],gabarits=[],prochainIdOp=1,prochainIdGab=1,moisActuel=new Date().getMonth(),anneeActuelle=new Date().getFullYear(),ajustementSoldeReel=0,searchTerm='';
+  function openDB() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(DB_NAME, DB_VERSION);
+      req.onupgradeneeded = e => {
+        const d = e.target.result;
+        if (!d.objectStoreNames.contains('operations')) d.createObjectStore('operations', { keyPath: 'id' });
+        if (!d.objectStoreNames.contains('gabarits')) d.createObjectStore('gabarits', { keyPath: 'id' });
+        if (!d.objectStoreNames.contains('ajustement')) d.createObjectStore('ajustement', { keyPath: 'cle' });
+        if (!d.objectStoreNames.contains('suppressions')) d.createObjectStore('suppressions', { keyPath: 'cle' });
+      };
+      req.onsuccess = e => { db = e.target.result; resolve(db); };
+      req.onerror = e => reject(e.target.error);
+    });
+  }
 
-  async function chargerDonnees(){const ops=await readAll('operations'),gabs=await readAll('gabarits'),ajust=await readAll('ajustement');operations=ops||[];gabarits=gabs||[];if(ajust.length>0)ajustementSoldeReel=ajust.find(a=>a.cle==='soldeReel')?.valeur||0;prochainIdOp=operations.reduce((m,op)=>Math.max(m,op.id),0)+1;prochainIdGab=gabarits.reduce((m,g)=>Math.max(m,g.id),0)+1;}
-  async function sauvegarderAjustementSolde(){await writeRecord('ajustement',{cle:'soldeReel',valeur:ajustementSoldeReel});}
-  async function writeSuppression(c){await writeRecord('suppressions',{cle:c});}
-  async function readSuppression(c){return new Promise(r=>{const t=db.transaction('suppressions','readonly'),st=t.objectStore('suppressions'),q=st.get(c);q.onsuccess=()=>r(q.result);q.onerror=()=>r(null);});}
+  function readAll(store) {
+    return new Promise(resolve => {
+      const tx = db.transaction(store, 'readonly');
+      const req = tx.objectStore(store).getAll();
+      req.onsuccess = () => resolve(req.result || []);
+    });
+  }
 
-  async function genererOperationsPourMois(mois,annee){const moisStr=`${annee}-${String(mois+1).padStart(2,'0')}`,existantes=operations.filter(op=>op.moisGeneration===moisStr&&op.gabaritId),idsExistants=existantes.map(op=>op.gabaritId);for(const gab of gabarits){if(idsExistants.includes(gab.id))continue;const cleSuppr=`gabarit_${gab.id}_${moisStr}`;if(await readSuppression(cleSuppr))continue;const dernierJour=new Date(annee,mois+1,0).getDate(),jour=Math.min(gab.jour,dernierJour),dateStr=`${annee}-${String(mois+1).padStart(2,'0')}-${String(jour).padStart(2,'0')}`,newOp={id:prochainIdOp++,date:dateStr,libelle:gab.libelle,categorie:gab.categorie,mode:gab.mode,montant:gab.montant,type:gab.type,pointe:false,gabaritId:gab.id,moisGeneration:moisStr};operations.push(newOp);await writeRecord('operations',newOp);}}
+  function writeRecord(store, record) {
+    return new Promise(resolve => {
+      const tx = db.transaction(store, 'readwrite');
+      tx.objectStore(store).put(record);
+      tx.oncomplete = () => resolve();
+    });
+  }
 
-  function trierOperations(){operations.sort((a,b)=>new Date(a.date)-new Date(b.date));}
-  function filtrerOperationsParMois(mois,annee){return operations.filter(op=>{const d=new Date(op.date);return d.getFullYear()===annee&&d.getMonth()===mois;});}
+  function deleteRecord(store, id) {
+    return new Promise(resolve => {
+      const tx = db.transaction(store, 'readwrite');
+      tx.objectStore(store).delete(id);
+      tx.oncomplete = () => resolve();
+    });
+  }
 
-  function calculerSoldesEtOpsFiltrees(){const soldeReelPointes=operations.filter(op=>op.pointe).reduce((s,op)=>s+(op.type==='revenu'?op.montant:-op.montant),0),soldeActuel=soldeReelPointes+ajustementSoldeReel;let premierMois={annee:anneeActuelle,mois:moisActuel};if(operations.length>0){const opsTriees=[...operations].sort((a,b)=>new Date(a.date)-new Date(b.date)),d=new Date(opsTriees[0].date);premierMois={annee:d.getFullYear(),mois:d.getMonth()};}const opsNonPointees=operations.filter(op=>{if(op.pointe)return false;const d=new Date(op.date);if(d.getFullYear()<premierMois.annee||(d.getFullYear()===premierMois.annee&&d.getMonth()<premierMois.mois))return false;if(d.getFullYear()>anneeActuelle||(d.getFullYear()===anneeActuelle&&d.getMonth()>moisActuel))return false;return true;}).sort((a,b)=>new Date(a.date)-new Date(b.date)),cumulNonPointees=opsNonPointees.reduce((s,op)=>s+(op.type==='revenu'?op.montant:-op.montant),0);return{soldeActuel,resteAVivre:soldeActuel+cumulNonPointees,opsNonPointees};}
+  let operations = [], gabarits = [], prochainIdOp = 1, prochainIdGab = 1;
+  let moisActuel = new Date().getMonth(), anneeActuelle = new Date().getFullYear();
+  let ajustementSoldeReel = 0, searchTerm = '';
 
-  function getSoldeProgressif(op,soldeActuel,opsNonPointees){let cumul=0;for(let o of opsNonPointees){cumul+=(o.type==='revenu'?o.montant:-o.montant);if(o.id===op.id)break;}return soldeActuel+cumul;}
+  async function chargerDonnees() {
+    const [ops, gabs, ajust] = await Promise.all([
+      readAll('operations'), readAll('gabarits'), readAll('ajustement')
+    ]);
+    operations = ops || [];
+    gabarits = gabs || [];
+    ajustementSoldeReel = ajust.find(a => a.cle === 'soldeReel')?.valeur || 0;
+    prochainIdOp = operations.reduce((m, o) => Math.max(m, o.id), 0) + 1;
+    prochainIdGab = gabarits.reduce((m, g) => Math.max(m, g.id), 0) + 1;
+  }
 
-  function afficherLivre(){
-    const opsDuMois=filtrerOperationsParMois(moisActuel,anneeActuelle).filter(op=>{if(!searchTerm)return true;const t=searchTerm.toLowerCase();return op.libelle.toLowerCase().includes(t)||op.categorie.toLowerCase().includes(t)||op.mode.toLowerCase().includes(t);});
-    const corps=document.getElementById('corps-table');corps.innerHTML='';
-    const{soldeActuel,resteAVivre,opsNonPointees}=calculerSoldesEtOpsFiltrees();
-    if(opsDuMois.length===0){corps.innerHTML=`<tr><td colspan="10" style="text-align:center;padding:20px;">Aucune opération ce mois</td></tr>`;}else{
-      const recurrentes=opsDuMois.filter(op=>op.gabaritId).sort((a,b)=>new Date(a.date)-new Date(b.date)),ponctuelles=opsDuMois.filter(op=>!op.gabaritId).sort((a,b)=>new Date(a.date)-new Date(b.date));
-      [...recurrentes,...ponctuelles].forEach((op,idx)=>{let soldeLigne;if(op.pointe){const opsAvant=opsNonPointees.filter(o=>new Date(o.date)<=new Date(op.date));soldeLigne=soldeActuel+opsAvant.reduce((s,o)=>s+(o.type==='revenu'?o.montant:-o.montant),0);}else{soldeLigne=getSoldeProgressif(op,soldeActuel,opsNonPointees);}
-        const tr=document.createElement('tr');if(op.gabaritId){tr.classList.add('recurrente');if(idx===0||!opsAffichees[idx-1]?.gabaritId)tr.classList.add('recurrente-first');}
-        tr.innerHTML=`<td>${new Date(op.date).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})}</td><td><strong>${op.libelle}</strong>${op.gabaritId?' 🔁':''}</td><td>${op.categorie}</td><td>${op.mode}</td><td class="text-right debit">${op.type==='depense'?op.montant.toFixed(2)+' €':''}</td><td class="text-right credit">${op.type==='revenu'?op.montant.toFixed(2)+' €':''}</td><td class="text-right">${soldeLigne.toFixed(2)} €</td><td class="text-center"><input type="checkbox" class="pointe-checkbox" data-id="${op.id}" ${op.pointe?'checked':''}></td><td class="text-center"><button class="btn-modifier-op" data-id="${op.id}">✏️</button></td><td class="text-center"><button class="btn-supprimer-op" data-id="${op.id}">🗑️</button></td>`;corps.appendChild(tr);});
-      document.querySelectorAll('.pointe-checkbox').forEach(cb=>{cb.addEventListener('change',async function(){const id=parseInt(this.dataset.id),op=operations.find(o=>o.id===id);if(op){op.pointe=this.checked;await writeRecord('operations',op);afficherToutLivre();}});});
-      document.querySelectorAll('.btn-supprimer-op').forEach(btn=>{btn.addEventListener('click',async function(e){e.stopPropagation();const id=parseInt(this.dataset.id);if(confirm('Supprimer ?')){const op=operations.find(o=>o.id===id);if(op?.gabaritId)await writeSuppression(`gabarit_${op.gabaritId}_${op.moisGeneration||op.date.slice(0,7)}`);await deleteRecord('operations',id);operations=operations.filter(o=>o.id!==id);afficherToutLivre();}});});
-      document.querySelectorAll('.btn-modifier-op').forEach(btn=>{btn.addEventListener('click',function(e){e.stopPropagation();const id=parseInt(this.dataset.id),op=operations.find(o=>o.id===id);if(op){document.getElementById('modif-id').value=op.id;document.getElementById('modif-date').value=op.date;document.getElementById('modif-type').value=op.type;document.getElementById('modif-libelle').value=op.libelle;document.getElementById('modif-categorie').value=op.categorie;document.getElementById('modif-mode').value=op.mode;document.getElementById('modif-montant').value=op.montant;document.getElementById('modal-modifier-overlay').classList.add('active');}});});
+  async function sauvegarderAjustement() {
+    await writeRecord('ajustement', { cle: 'soldeReel', valeur: ajustementSoldeReel });
+  }
+
+  async function writeSuppression(cle) {
+    await writeRecord('suppressions', { cle });
+  }
+
+  async function readSuppression(cle) {
+    return new Promise(resolve => {
+      const tx = db.transaction('suppressions', 'readonly');
+      const req = tx.objectStore('suppressions').get(cle);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => resolve(null);
+    });
+  }
+
+  async function genererOperationsPourMois(mois, annee) {
+    const moisStr = `${annee}-${String(mois+1).padStart(2,'0')}`;
+    const existantes = operations.filter(op => op.moisGeneration === moisStr && op.gabaritId);
+    const idsExistants = existantes.map(op => op.gabaritId);
+    for (const gab of gabarits) {
+      if (idsExistants.includes(gab.id)) continue;
+      const cleSuppr = `gabarit_${gab.id}_${moisStr}`;
+      if (await readSuppression(cleSuppr)) continue;
+      const dernierJour = new Date(annee, mois+1, 0).getDate();
+      const jour = Math.min(gab.jour, dernierJour);
+      const dateStr = `${annee}-${String(mois+1).padStart(2,'0')}-${String(jour).padStart(2,'0')}`;
+      const newOp = {
+        id: prochainIdOp++,
+        date: dateStr,
+        libelle: gab.libelle,
+        categorie: gab.categorie,
+        mode: gab.mode,
+        montant: gab.montant,
+        type: gab.type,
+        pointe: false,
+        gabaritId: gab.id,
+        moisGeneration: moisStr
+      };
+      operations.push(newOp);
+      await writeRecord('operations', newOp);
     }
-    document.getElementById('mois-courant-livre').textContent=new Date(anneeActuelle,moisActuel).toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
-    document.getElementById('solde-reel').textContent=`Solde réel : ${soldeActuel.toFixed(2)} €`;
-    const resteEl=document.getElementById('reste-a-vivre');resteEl.textContent=`Reste à vivre : ${res
+  }
+
+  function trierOperations() { operations.sort((a,b) => new Date(a.date) - new Date(b.date)); }
+  function filtrerParMois(mois, annee) {
+    return operations.filter(op => {
+      const d = new Date(op.date);
+      return d.getFullYear() === annee && d.getMonth() === mois;
+    });
+  }
+
+  function calculerSoldes() {
+    const soldePointe = operations.filter(o => o.pointe).reduce((s, o) => s + (o.type === 'revenu' ? o.montant : -o.montant), 0);
+    const soldeActuel = soldePointe + ajustementSoldeReel;
+    let premierMois = { annee: anneeActuelle, mois: moisActuel };
+    if (operations.length > 0) {
+      const tri = [...operations].sort((a,b) => new Date(a.date) - new Date(b.date));
+      const d = new Date(tri[0].date);
+      premierMois = { annee: d.getFullYear(), mois: d.getMonth() };
+    }
+    const nonPointees = operations.filter(o => {
+      if (o.pointe) return false;
+      const d = new Date(o.date);
+      if (d.getFullYear() < premierMois.annee || (d.getFullYear() === premierMois.annee && d.getMonth() < premierMois.mois)) return false;
+      if (d.getFullYear() > anneeActuelle || (d.getFullYear() === anneeActuelle && d.getMonth() > moisActuel)) return false;
+      return true;
+    }).sort((a,b) => new Date(a.date) - new Date(b.date));
+    const cumul = nonPointees.reduce((s, o) => s + (o.type === 'revenu' ? o.montant : -o.montant), 0);
+    return { soldeActuel, resteAVivre: soldeActuel + cumul, nonPointees };
+  }
+
+  function getSoldeProgressif(op, base, nonPointees) {
+    let cumul = 0;
+    for (const o of nonPointees) {
+      cumul += (o.type === 'revenu' ? o.montant : -o.montant);
+      if (o.id === op.id) break;
+    }
+    return base + cumul;
+  }
+
+  function afficherLivre() {
+    const opsMois = filtrerParMois(moisActuel, anneeActuelle).filter(op => {
+      if (!searchTerm) return true;
+      const t = searchTerm.toLowerCase();
+      return op.libelle.toLowerCase().includes(t) || op.categorie.toLowerCase().includes(t) || op.mode.toLowerCase().includes(t);
+    });
+    const corps = document.getElementById('corps-table');
+    corps.innerHTML = '';
+    const { soldeActuel, resteAVivre, nonPointees } = calculerSoldes();
+    if (opsMois.length === 0) {
+      corps.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:20px;">Aucune opération</td></tr>';
+    } else {
+      const recurrentes = opsMois.filter(o => o.gabaritId).sort((a,b) => new Date(a.date) - new Date(b.date));
+      const ponctuelles = opsMois.filter(o => !o.gabaritId).sort((a,b) => new Date(a.date) - new Date(b.date));
+      const affichees = [...recurrentes, ...ponctuelles];
+      affichees.forEach((op, idx) => {
+        let soldeLigne;
+        if (op.pointe) {
+          const avant = nonPointees.filter(o => new Date(o.date) <= new Date(op.date));
+          soldeLigne = soldeActuel + avant.reduce((s, o) => s + (o.type === 'revenu' ? o.montant : -o.montant), 0);
+        } else {
+          soldeLigne = getSoldeProgressif(op, soldeActuel, nonPointees);
+        }
+        const tr = document.createElement('tr');
+        if (op.gabaritId) {
+          tr.classList.add('recurrente');
+          if (idx === 0 || !affichees[idx-1]?.gabaritId) tr.classList.add('recurrente-first');
+          if (idx === affichees.length-1 || !affichees[idx+1]?.gabaritId) tr.classList.add('recurrente-last');
+        }
+        tr.innerHTML = `
+          <td>${new Date(op.date).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})}</td>
+          <td><strong>${op.libelle}</strong>${op.gabaritId?' 🔁':''}</td>
+          <td>${op.categorie}</td>
+          <td>${op.mode}</td>
+          <td class="text-right debit">${op.type==='depense'?op.montant.toFixed(2)+' €':''}</td>
+          <td class="text-right credit">${op.type==='revenu'?op.montant.toFixed(2)+' €':''}</td>
+          <td class="text-right">${soldeLigne.toFixed(2)} €</td>
+          <td class="text-center"><input type="checkbox" class="pointe-checkbox" data-id="${op.id}" ${op.pointe?'checked':''}></td>
+          <td class="text-center"><button class="btn-modifier-op" data-id="${op.id}">✏️</button></td>
+          <td class="text-center"><button class="btn-supprimer-op" data-id="${op.id}">🗑️</button></td>
+        `;
+        corps.appendChild(tr);
+      });
+
+      document.querySelectorAll('.pointe-checkbox').forEach(cb => {
+        cb.addEventListener('change', async function() {
+          const id = parseInt(this.dataset.id);
+          const op = operations.find(o => o.id === id);
+          if (op) { op.pointe = this.checked; await writeRecord('operations', op); afficherTout(); }
+        });
+      });
+      document.querySelectorAll('.btn-supprimer-op').forEach(btn => {
+        btn.addEventListener('click', async function(e) {
+          e.stopPropagation();
+          const id = parseInt(this.dataset.id);
+          if (confirm('Supprimer ?')) {
+            const op = operations.find(o => o.id === id);
+            if (op?.gabaritId) await writeSuppression(`gabarit_${op.gabaritId}_${op.moisGeneration||op.date.slice(0,7)}`);
+            await deleteRecord('operations', id);
+            operations = operations.filter(o => o.id !== id);
+            afficherTout();
+          }
+        });
+      });
+      document.querySelectorAll('.btn-modifier-op').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const id = parseInt(this.dataset.id);
+          const op = operations.find(o => o.id === id);
+          if (op) {
+            document.getElementById('modif-id').value = op.id;
+            document.getElementById('modif-date').value = op.date;
+            document.getElementById('modif-type').value = op.type;
+            document.getElementById('modif-libelle').value = op.libelle;
+            document.getElementById('modif-categorie').value = op.categorie;
+            document.getElementById('modif-mode').value = op.mode;
+            document.getElementById('modif-montant').value = op.montant;
+            document.getElementById('modal-modifier-overlay').classList.add('active');
+          }
+        });
+      });
+    }
+
+    document.getElementById('mois-courant-livre').textContent =
+      new Date(anneeActuelle, moisActuel).toLocaleDateString('fr-FR', { month:'long', year:'numeric' });
+    document.getElementById('solde-reel').textContent = `Solde réel : ${soldeActuel.toFixed(2)} €`;
+    const resteEl = document.getElementById('reste-a-vivre');
+    resteEl.textContent = `Reste à vivre : ${resteAVivre.toFixed(2)} €`;
+    resteEl.className = 'reste-a-vivre ' + (resteAVivre >= 0 ? 'positif' : 'negatif');
+  }
+
+  function afficherTout() { trierOperations(); afficherLivre(); }
+
+  // Ajustement
+  document.getElementById('btn-edit-ajustement').addEventListener('click', () => {
+    document.getElementById('ajustement-input-container').style.display = 'flex';
+    document.getElementById('ajustement-montant').value = ajustementSoldeReel || '';
+  });
+  document.getElementById('btn-apply-ajustement').addEventListener('click', async () => {
+    const v = parseFloat(document.getElementById('ajustement-montant').value);
+    if (isNaN(v)) return;
+    ajustementSoldeReel = v;
+    await sauvegarderAjustement();
+    document.getElementById('ajustement-input-container').style.display = 'none';
+    afficherTout();
+  });
+  document.getElementById('btn-reset-ajustement').addEventListener('click', async () => {
+    ajustementSoldeReel = 0;
+    await sauvegarderAjustement();
+    document.getElementById('ajustement-input-container').style.display = 'none';
+    afficherTout();
+  });
+
+  // Modification
+  document.getElementById('btn-modif-save').addEventListener('click', async () => {
+    const id = parseInt(document.getElementById('modif-id').value);
+    const op = operations.find(o => o.id === id);
+    if (op) {
+      op.date = document.getElementById('modif-date').value;
+      op.type = document.getElementById('modif-type').value;
+      op.libelle = document.getElementById('modif-libelle').value.trim();
+      op.categorie = document.getElementById('modif-categorie').value;
+      op.mode = document.getElementById('modif-mode').value;
+      op.montant = parseFloat(document.getElementById('modif-montant').value);
+      if (!op.libelle || isNaN(op.montant) || op.montant <= 0) { alert('Invalide'); return; }
+      await writeRecord('operations', op);
+      afficherTout();
+    }
+    document.getElementById('modal-modifier-overlay').classList.remove('active');
+  });
+  document.getElementById('btn-modif-cancel').addEventListener('click', () => {
+    document.getElementById('modal-modifier-overlay').classList.remove('active');
+  });
+
+  // Suppression totale du mois
+  document.getElementById('btn-supprimer-tout').addEventListener('click', async () => {
+    const ops = filtrerParMois(moisActuel, anneeActuelle);
+    if (!ops.length) return;
+    if (confirm(`Supprimer les ${ops.length} opérations ?`)) {
+      for (const op of ops) {
+        if (op.gabaritId) await writeSuppression(`gabarit_${op.gabaritId}_${op.moisGeneration||op.date.slice(0,7)}`);
+        await deleteRecord('operations', op.id);
+      }
+      operations = operations.filter(o => !ops.includes(o));
+      afficherTout();
+    }
+  });
+
+  // Mois
+  document.getElementById('mois-precedent').addEventListener('click', async function() {
+    this.disabled = true;
+    try {
+      moisActuel--;
+      if (moisActuel < 0) { moisActuel = 11; anneeActuelle--; }
+      await genererOperationsPourMois(moisActuel, anneeActuelle);
+      afficherTout();
+    } catch (err) {} finally { this.disabled = false; }
+  });
+  document.getElementById('mois-suivant').addEventListener('click', async function() {
+    this.disabled = true;
+    try {
+      moisActuel++;
+      if (moisActuel > 11) { moisActuel = 0; anneeActuelle++; }
+      await genererOperationsPourMois(moisActuel, anneeActuelle);
+      afficherTout();
+    } catch (err) {} finally { this.disabled = false; }
+  });
+  document.getElementById('btn-generer').addEventListener('click', async () => {
+    await genererOperationsPourMois(moisActuel, anneeActuelle);
+    afficherTout();
+  });
+
+  // Recherche
+  document.getElementById('search-input').addEventListener('input', function() {
+    searchTerm = this.value;
+    afficherLivre();
+  });
+
+  // Gabarits
+  function afficherGabarits() {
+    const l = document.getElementById('liste-gabarits');
+    l.innerHTML = '';
+    [...gabarits].sort((a,b) => a.jour - b.jour).forEach(g => {
+      const li = document.createElement('li');
+      li.className = 'gabarit-item';
+      li.innerHTML = `<div><strong>${g.libelle}</strong> - ${g.montant.toFixed(2)} € le ${g.jour}</div><button class="btn-supprimer" data-id="${g.id}">✕</button>`;
+      l.appendChild(li);
+    });
+    document.querySelectorAll('.btn-supprimer').forEach(b => {
+      b.addEventListener('click', async function() {
+        const id = parseInt(this.dataset.id);
+        await deleteRecord('gabarits', id);
+        gabarits = gabarits.filter(g => g.id !== id);
+        afficherGabarits();
+      });
+    });
+  }
+  document.getElementById('btn-ajout-gabarit').addEventListener('click', async () => {
+    const t = document.getElementById('gabarit-type').value,
+          l = document.getElementById('gabarit-libelle').value.trim(),
+          c = document.getElementById('gabarit-categorie').value,
+          m = document.getElementById('gabarit-mode').value,
+          mt = parseFloat(document.getElementById('gabarit-montant').value),
+          j = parseInt(document.getElementById('gabarit-jour').value, 10);
+    if (!l || isNaN(mt) || mt <= 0 || j < 1 || j > 31) { alert('Champs invalides'); return; }
+    const ng = { id: prochainIdGab++, type: t, libelle: l, categorie: c, mode: m, montant: mt, jour: j };
+    gabarits.push(ng);
+    await writeRecord('gabarits', ng);
+    document.getElementById('gabarit-libelle').value = '';
+    document.getElementById('gabarit-montant').value = '';
+    afficherGabarits();
+    await genererOperationsPourMois(moisActuel, anneeActuelle);
+    afficherTout();
+  });
+
+  // Analyse
+  function actualiserAnalyse() {
+    const tp = document.getElementById('analyse-periode-type').value;
+    let debut, fin;
+    const now = new Date();
+    if (tp === '12m') {
+      fin = new Date(now.getFullYear(), now.getMonth()+1, 0);
+      debut = new Date(fin.getFullYear(), fin.getMonth()-12, 1);
+    } else if (tp === '6m') {
+      fin = new Date(now.getFullYear(), now.getMonth()+1, 0);
+      debut = new Date(fin.getFullYear(), fin.getMonth()-6, 1);
+    } else {
+      debut = new Date(2000,0,1); fin = new Date(2100,0,1);
+    }
+    const depenses = operations.filter(o => {
+      const d = new Date(o.date);
+      return o.type === 'depense' && d >= debut && d <= fin;
+    });
+    const cats = {};
+    depenses.forEach(o => { cats[o.categorie] = (cats[o.categorie]||0) + o.montant; });
+    const total = Object.values(cats).reduce((s,v) => s+v, 0);
+    let html = '<table style="width:100%;border-collapse:collapse;"><tr style="border-bottom:2px solid #b0a58c;"><th style="text-align:left;padding:6px;">Catégorie</th><th style="text-align:right;padding:6px;">Total</th><th style="text-align:right;padding:6px;">%</th></tr>';
+    if (!total) html += '<tr><td colspan="3" style="text-align:center;padding:10px;">Aucune dépense</td></tr>';
+    else {
+      Object.entries(cats).sort((a,b) => b[1]-a[1]).forEach(([cat, val]) => {
+        html += `<tr style="border-bottom:1px solid #ddd;"><td style="padding:6px;">${cat}</td><td style="text-align:right;padding:6px;">${val.toFixed(2)} €</td><td style="text-align:right;padding:6px;">${(val/total*100).toFixed(1)}%</td></tr>`;
+      });
+    }
+    html += '</table>';
+    document.getElementById('analyse-resultat').innerHTML = html;
+  }
+  document.getElementById('btn-actualiser-analyse').addEventListener('click', actualiserAnalyse);
+
+  // Onglets
+  document.querySelectorAll('.onglet').forEach(o => {
+    o.addEventListener('click', function() {
+      const nom = this.dataset.onglet;
+      document.querySelectorAll('.onglet').forEach(x => x.classList.remove('actif'));
+      this.classList.add('actif');
+      document.querySelectorAll('.contenu-onglet').forEach(x => x.classList.remove('actif'));
+      document.getElementById(nom).classList.add('actif');
+      if (nom === 'gabarits') afficherGabarits();
+      if (nom === 'livre') afficherTout();
+      if (nom === 'analyse') actualiserAnalyse();
+    });
+  });
+
+  // Modal ajout
+  const mo = document.getElementById('modal-overlay');
+  document.getElementById('btn-ajout').addEventListener('click', () => {
+    document.getElementById('form-date').value = new Date().toISOString().slice(0,10);
+    document.getElementById('form-type').value = 'depense';
+    document.getElementById('form-libelle').value = '';
+    document.getElementById('form-montant').value = '';
+    mo.classList.add('active');
+  });
+  document.getElementById('btn-cancel').addEventListener('click', () => mo.classList.remove('active'));
+  mo.addEventListener('click', e => { if (e.target === mo) mo.classList.remove('active'); });
+  document.getElementById('btn-save').addEventListener('click', async () => {
+    const date = document.getElementById('form-date').value,
+          type = document.getElementById('form-type').value,
+          libelle = document.getElementById('form-libelle').value.trim(),
+          categorie = document.getElementById('form-categorie').value,
+          mode = document.getElementById('form-mode').value,
+          montant = parseFloat(document.getElementById('form-montant').value);
+    if (!libelle || isNaN(montant) || montant <= 0) { alert('Invalide'); return; }
+    const op = { id: prochainIdOp++, date, type, libelle, categorie, mode, montant, pointe: false, gabaritId: null, moisGeneration: null };
+    operations.push(op);
+    await writeRecord('operations', op);
+    trierOperations();
+    afficherTout();
+    mo.classList.remove('active');
+  });
+
+  // Export CSV
+  document.getElementById('export-btn').addEventListener('click', () => {
+    let csv = 'Date;Opération;Type;Catégorie;Mode;Montant;Pointé\n';
+    operations.forEach(o => { csv += `${o.date};${o.libelle};${o.type};${o.categorie};${o.mode};${o.montant};${o.pointe?'Oui':'Non'}\n`; });
+    const blob = new Blob([csv], {type:'text/csv'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'suivi.csv'; a.click();
+  });
+
+  // Sauvegarde / Restauration
+  document.getElementById('save-btn').addEventListener('click', async () => {
+    const data = { operations, gabarits, ajustementSoldeReel, prochainIdOp, prochainIdGab };
+    const blob = new Blob([JSON.stringify(data)], {type:'application/json'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'sauvegarde.json'; a.click();
+  });
+  document.getElementById('restore-btn').addEventListener('click', () => {
+    const input = document.createElement('input'); input.type = 'file'; input.accept = '.json';
+    input.addEventListener('change', async e => {
+      try {
+        const file = e.target.files[0];
+        const text = await file.text();
+        const data = JSON.parse(text);
+        operations = data.operations || [];
+        gabarits = data.gabarits || [];
+        ajustementSoldeReel = data.ajustementSoldeReel || 0;
+        prochainIdOp = data.prochainIdOp || 1;
+        prochainIdGab = data.prochainIdGab || 1;
+        for (const op of operations) await writeRecord('operations', op);
+        for (const gab of gabarits) await writeRecord('gabarits', gab);
+        await sauvegarderAjustement();
+        await genererOperationsPourMois(moisActuel, anneeActuelle);
+        trierOperations();
+        afficherTout();
+        afficherGabarits();
+        alert('Restauré !');
+      } catch (err) { alert('Fichier invalide'); }
+    });
+    input.click();
+  });
+
+  // Démarrage
+  (async () => {
+    await openDB();
+    await chargerDonnees();
+    await genererOperationsPourMois(moisActuel, anneeActuelle);
+    trierOperations();
+    afficherTout();
+    afficherGabarits();
+  })();
+</script>
+</body>
+</html>
