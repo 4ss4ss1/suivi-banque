@@ -77,7 +77,6 @@
     .gabarit-item { display: flex; justify-content: space-between; align-items: center; background: #fff; border: 1px solid #ddd; padding: 8px; border-radius: 6px; margin-bottom: 6px; }
     .gabarit-info { flex: 1; font-size: 0.85rem; }
     .btn-supprimer { background: #b00020; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
-
     .analyse-resume { background: white; border: 1px solid #c0b8a0; border-radius: 6px; padding: 12px; margin-bottom: 16px; }
     .analyse-resume table { min-width: auto; }
     .filtre-periode { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
@@ -183,40 +182,41 @@
   function trierOperations(){operations.sort((a,b)=>new Date(a.date)-new Date(b.date));}
   function filtrerOperationsParMois(mois,annee){return operations.filter(op=>{const d=new Date(op.date);return d.getFullYear()===annee&&d.getMonth()===mois;});}
 
-  // Renvoie le solde après une opération donnée (cumul depuis le début du suivi)
-  function getSoldeProgressif(op, soldeActuel, opsFiltrees) {
-    let cumul = 0;
-    for (let o of opsFiltrees) {
-      cumul += (o.type === 'revenu' ? o.montant : -o.montant);
-      if (o.id === op.id) break; // on s'arrête à l'opération concernée
-    }
-    return soldeActuel + cumul;
-  }
-
+  // ✅ Nouveau calcul : cumul uniquement des opérations NON pointées depuis le début du suivi
   function calculerSoldesEtOpsFiltrees() {
-    const soldeReelPointes = operations.filter(op=>op.pointe).reduce((s,op)=>s+(op.type==='revenu'?op.montant:-op.montant),0);
+    const soldeReelPointes = operations.filter(op => op.pointe).reduce((s, op) => s + (op.type === 'revenu' ? op.montant : -op.montant), 0);
     const soldeActuel = soldeReelPointes + ajustementSoldeReel;
 
-    // Déterminer le premier mois contenant au moins une opération pointée
-    const opsPointees = operations.filter(op=>op.pointe);
+    // Déterminer le premier mois contenant au moins une opération (pointée ou non)
     let premierMois = { annee: anneeActuelle, mois: moisActuel };
-    if (opsPointees.length > 0) {
-      opsPointees.sort((a,b)=>new Date(a.date)-new Date(b.date));
-      const d = new Date(opsPointees[0].date);
+    if (operations.length > 0) {
+      const opsTriees = [...operations].sort((a, b) => new Date(a.date) - new Date(b.date));
+      const d = new Date(opsTriees[0].date);
       premierMois = { annee: d.getFullYear(), mois: d.getMonth() };
     }
 
-    // Filtrer toutes les opérations (pointées ou non) à partir de ce premier mois jusqu'à la fin du mois affiché
-    const opsFiltrees = operations.filter(op => {
+    // Opérations NON pointées depuis ce premier mois jusqu'à la fin du mois affiché
+    const opsNonPointees = operations.filter(op => {
+      if (op.pointe) return false; // on ignore les pointées pour le cumul
       const d = new Date(op.date);
       if (d.getFullYear() < premierMois.annee || (d.getFullYear() === premierMois.annee && d.getMonth() < premierMois.mois)) return false;
       if (d.getFullYear() > anneeActuelle || (d.getFullYear() === anneeActuelle && d.getMonth() > moisActuel)) return false;
       return true;
-    }).sort((a,b)=>new Date(a.date)-new Date(b.date));
+    }).sort((a, b) => new Date(a.date) - new Date(b.date));
 
-    const cumul = opsFiltrees.reduce((s, op) => s + (op.type === 'revenu' ? op.montant : -op.montant), 0);
-    const resteAVivre = soldeActuel + cumul;
-    return { soldeActuel, resteAVivre, opsFiltrees };
+    const cumulNonPointees = opsNonPointees.reduce((s, op) => s + (op.type === 'revenu' ? op.montant : -op.montant), 0);
+    const resteAVivre = soldeActuel + cumulNonPointees;
+    return { soldeActuel, resteAVivre, opsNonPointees };
+  }
+
+  // Renvoie le solde progressif selon les opérations non pointées uniquement
+  function getSoldeProgressif(op, soldeActuel, opsNonPointees) {
+    let cumul = 0;
+    for (let o of opsNonPointees) {
+      cumul += (o.type === 'revenu' ? o.montant : -o.montant);
+      if (o.id === op.id) break;
+    }
+    return soldeActuel + cumul;
   }
 
   function afficherLivre() {
@@ -224,14 +224,24 @@
     const corps = document.getElementById('corps-table');
     corps.innerHTML = '';
 
-    const { soldeActuel, resteAVivre, opsFiltrees } = calculerSoldesEtOpsFiltrees();
+    const { soldeActuel, resteAVivre, opsNonPointees } = calculerSoldesEtOpsFiltrees();
 
     if (opsDuMois.length === 0) {
       corps.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:20px;">Aucune opération ce mois</td></tr>`;
     } else {
       opsDuMois.forEach((op, idx) => {
-        // Calculer le solde progressif pour cette opération
-        const soldeLigne = getSoldeProgressif(op, soldeActuel, opsFiltrees);
+        // Pour les opérations pointées, le solde affiché est le même que le reste à vivre final (car elles n'impactent plus le cumul)
+        // Pour les non pointées, on calcule le solde progressif
+        let soldeLigne;
+        if (op.pointe) {
+          // Une opération pointée n'est plus dans opsNonPointees, donc le solde reste le même que le précédent
+          // On utilise le cumul des non pointées jusqu'à la date de l'opération précédente
+          // On va chercher le solde après la dernière opération non pointée avant cette date
+          const opsAvant = opsNonPointees.filter(o => new Date(o.date) <= new Date(op.date));
+          soldeLigne = soldeActuel + opsAvant.reduce((s, o) => s + (o.type === 'revenu' ? o.montant : -o.montant), 0);
+        } else {
+          soldeLigne = getSoldeProgressif(op, soldeActuel, opsNonPointees);
+        }
 
         const tr = document.createElement('tr');
         if (op.gabaritId) {
