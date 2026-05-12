@@ -12,53 +12,16 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: system-ui, -apple-system, sans-serif;
-      background: #f0f0f0;
-      display: flex;
-      justify-content: center;
-      padding: 10px;
-    }
-    .app {
-      max-width: 600px;
-      width: 100%;
-      background: #fffcf5;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-      padding: 12px;
-      font-size: 0.9rem;
-    }
-    .onglets {
-      display: flex;
-      border-bottom: 2px solid #c0b8a0;
-      margin-bottom: 12px;
-    }
-    .onglet {
-      padding: 8px 12px;
-      cursor: pointer;
-      border-radius: 6px 6px 0 0;
-      background: #e9e6df;
-      margin-right: 4px;
-      font-weight: 500;
-      font-size: 0.85rem;
-    }
-    .onglet.actif {
-      background: white;
-      border-color: #c0b8a0;
-      font-weight: 600;
-    }
+    body { font-family: system-ui, -apple-system, sans-serif; background: #f0f0f0; display: flex; justify-content: center; padding: 10px; }
+    .app { max-width: 600px; width: 100%; background: #fffcf5; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); padding: 12px; font-size: 0.9rem; }
+    .onglets { display: flex; border-bottom: 2px solid #c0b8a0; margin-bottom: 12px; }
+    .onglet { padding: 8px 12px; cursor: pointer; border-radius: 6px 6px 0 0; background: #e9e6df; margin-right: 4px; font-weight: 500; font-size: 0.85rem; }
+    .onglet.actif { background: white; border-color: #c0b8a0; font-weight: 600; }
     .contenu-onglet { display: none; }
     .contenu-onglet.actif { display: block; }
-
     .banque-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
     .banque-header h1 { font-size: 1.2rem; }
-    .soldes {
-      background: #e9e6df;
-      border: 1px solid #c0b8a0;
-      border-radius: 6px;
-      padding: 8px 12px;
-      margin-bottom: 8px;
-    }
+    .soldes { background: #e9e6df; border: 1px solid #c0b8a0; border-radius: 6px; padding: 8px 12px; margin-bottom: 8px; }
     .solde-reel-line { display: flex; align-items: center; gap: 6px; }
     .solde-reel { font-size: 0.85rem; }
     .reste-a-vivre { font-size: 1.3rem; font-weight: bold; margin-top: 4px; display: block; }
@@ -73,90 +36,46 @@
     .ajustement-input input { width: 100px; padding: 4px; }
     .ajustement-input button { padding: 4px 8px; font-size: 0.8rem; cursor: pointer; }
     .indicateur-ajustement { font-size: 0.7rem; color: #555; display: none; }
-
-    .mois-selector {
-      text-align: center; margin: 8px 0; display: flex; justify-content: center; align-items: center; gap: 10px;
-    }
+    .mois-selector { text-align: center; margin: 8px 0; display: flex; justify-content: center; align-items: center; gap: 10px; }
     .mois-selector button { background: none; border: 1px solid #aaa; border-radius: 4px; padding: 4px 8px; cursor: pointer; }
     .mois-selector button:disabled { opacity: 0.4; cursor: not-allowed; }
     .mois-selector span { font-weight: 600; min-width: 110px; display: inline-block; }
-
     .table-wrapper { overflow-x: auto; margin-bottom: 12px; border: 1px solid #c0b8a0; border-radius: 4px; background: white; }
     table { width: 100%; border-collapse: collapse; min-width: 650px; }
-    th {
-      background: #f3efe5; font-weight: 600; font-size: 0.7rem; text-transform: uppercase;
-      padding: 8px 2px; border-bottom: 2px solid #b0a58c;
-    }
+    th { background: #f3efe5; font-weight: 600; font-size: 0.7rem; text-transform: uppercase; padding: 8px 2px; border-bottom: 2px solid #b0a58c; }
     td { padding: 6px 2px; border-bottom: 1px solid #ddd6c8; font-size: 0.75rem; vertical-align: middle; }
     .text-right { text-align: right; }
     .text-center { text-align: center; }
     .debit { color: #b00020; }
     .credit { color: #1e5d3f; }
     .pointe-checkbox { width: 18px; height: 18px; cursor: pointer; accent-color: #1e5d3f; }
-    .btn-supprimer-op, .btn-modifier-op {
-      background: none;
-      border: none;
-      font-size: 1.1rem;
-      cursor: pointer;
-      padding: 2px 5px;
-      line-height: 1;
-    }
+    .btn-supprimer-op, .btn-modifier-op { background: none; border: none; font-size: 1.1rem; cursor: pointer; padding: 2px 5px; line-height: 1; }
 
-    /* Style pour les opérations récurrentes */
-    tr.recurrente {
-      border-left: 3px solid #333;
-      border-right: 3px solid #333;
-      background: #fafaf7;
-    }
-    tr.recurrente td {
-      border-bottom: 1px solid #ddd;
-    }
-    tr.recurrente + tr:not(.recurrente) {
-      border-top: 3px solid #333;
-    }
-    /* Bordure supérieure pour le premier bloc récurrent */
-    tr.recurrente-first {
-      border-top: 3px solid #333;
-    }
+    /* Regroupement des opérations récurrentes */
+    tr.recurrente { border-left: 3px solid #222; border-right: 3px solid #222; background: #f9f9f4; }
+    tr.recurrente-first { border-top: 3px solid #222; }
+    tr.recurrente-last { border-bottom: 3px solid #222; }
 
-    .btn-ajout, .btn-generer, .btn-supprimer-tout {
-      width: 100%; padding: 12px; font-size: 0.95rem; border: 1px solid #8b7d6b;
-      background: #f3efe5; color: #333; border-radius: 4px; cursor: pointer; font-weight: 500; margin-top: 6px;
-    }
+    .btn-ajout, .btn-generer, .btn-supprimer-tout { width: 100%; padding: 12px; font-size: 0.95rem; border: 1px solid #8b7d6b; background: #f3efe5; color: #333; border-radius: 4px; cursor: pointer; font-weight: 500; margin-top: 6px; }
     .btn-ajout:hover, .btn-generer:hover, .btn-supprimer-tout:hover { background: #e6dfcc; }
     .btn-supprimer-tout { color: #b00020; border-color: #b00020; font-size: 0.85rem; }
 
-    /* Modal */
-    .modal-overlay {
-      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 10;
-    }
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 10; }
     .modal-overlay.active { display: flex; }
-    .modal {
-      background: white; border-radius: 8px; padding: 16px; width: 320px; max-width: 90%;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
-    }
+    .modal { background: white; border-radius: 8px; padding: 16px; width: 320px; max-width: 90%; box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
     .modal h3 { margin-bottom: 12px; font-size: 1.1rem; }
     .modal label { display: block; font-size: 0.8rem; margin-top: 8px; margin-bottom: 2px; }
     .modal input, .modal select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem; }
     .btn-group { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
     .btn-save { background: #1e5d3f; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: 600; }
     .btn-cancel { background: #eee; border: 1px solid #aaa; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
-
-    /* Gabarits / Analyse */
-    .gabarit-form {
-      background: white; border: 1px solid #c0b8a0; border-radius: 6px; padding: 12px; margin-bottom: 12px;
-    }
+    .gabarit-form { background: white; border: 1px solid #c0b8a0; border-radius: 6px; padding: 12px; margin-bottom: 12px; }
     .gabarit-form label { display: block; font-size: 0.8rem; margin-top: 6px; margin-bottom: 2px; }
     .gabarit-form input, .gabarit-form select { width: 100%; padding: 7px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem; }
     .liste-gabarits { list-style: none; margin-top: 10px; }
-    .gabarit-item {
-      display: flex; justify-content: space-between; align-items: center;
-      background: #fff; border: 1px solid #ddd; padding: 8px; border-radius: 6px; margin-bottom: 6px;
-    }
+    .gabarit-item { display: flex; justify-content: space-between; align-items: center; background: #fff; border: 1px solid #ddd; padding: 8px; border-radius: 6px; margin-bottom: 6px; }
     .gabarit-info { flex: 1; font-size: 0.85rem; }
     .btn-supprimer { background: #b00020; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
-
     .analyse-resume { background: white; border: 1px solid #c0b8a0; border-radius: 6px; padding: 12px; margin-bottom: 16px; }
     .analyse-resume table { min-width: auto; }
     .filtre-periode { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
@@ -171,13 +90,8 @@
     <div class="onglet" data-onglet="gabarits">🗓️ Gabarits</div>
     <div class="onglet" data-onglet="analyse">📊 Analyse</div>
   </div>
-
-  <!-- Livre -->
   <div class="contenu-onglet actif" id="livre">
-    <div class="banque-header">
-      <h1>Compte Courant</h1>
-      <span>⚙️</span>
-    </div>
+    <div class="banque-header"><h1>Compte Courant</h1><span>⚙️</span></div>
     <div class="soldes">
       <div class="solde-reel-line">
         <span class="solde-reel" id="solde-reel">Solde réel : 0,00 €</span>
@@ -190,741 +104,153 @@
         <button id="btn-reset-ajustement">Réinit.</button>
       </div>
       <span class="reste-a-vivre" id="reste-a-vivre">Reste à vivre : 0,00 €</span>
-      <div class="reste-bar-container">
-        <div class="reste-bar" id="reste-bar" style="width: 50%;"></div>
-      </div>
+      <div class="reste-bar-container"><div class="reste-bar" id="reste-bar" style="width:50%;"></div></div>
     </div>
-
     <div class="mois-selector">
-      <button id="mois-precedent">◀</button>
-      <span id="mois-courant-livre">…</span>
-      <button id="mois-suivant">▶</button>
+      <button id="mois-precedent">◀</button><span id="mois-courant-livre">…</span><button id="mois-suivant">▶</button>
     </div>
-
-    <div class="table-wrapper">
-      <table id="table-operations">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Opération</th>
-            <th>Catégorie</th>
-            <th>Mode</th>
-            <th class="text-right">Débit</th>
-            <th class="text-right">Crédit</th>
-            <th class="text-right">Solde</th>
-            <th class="text-center">Pointé</th>
-            <th class="text-center">Mod.</th>
-            <th class="text-center">Suppr.</th>
-          </tr>
-        </thead>
-        <tbody id="corps-table"></tbody>
-      </table>
-    </div>
-
+    <div class="table-wrapper"><table id="table-operations"><thead><tr><th>Date</th><th>Opération</th><th>Catégorie</th><th>Mode</th><th class="text-right">Débit</th><th class="text-right">Crédit</th><th class="text-right">Solde</th><th class="text-center">Pointé</th><th class="text-center">Mod.</th><th class="text-center">Suppr.</th></tr></thead><tbody id="corps-table"></tbody></table></div>
     <button class="btn-ajout" id="btn-ajout">+ Nouvelle opération</button>
     <button class="btn-generer" id="btn-generer">🔄 Générer opérations récurrentes du mois</button>
     <button class="btn-supprimer-tout" id="btn-supprimer-tout">🗑️ Supprimer toutes les opérations de ce mois</button>
   </div>
-
-  <!-- Gabarits -->
   <div class="contenu-onglet" id="gabarits">
     <h2>Charges fixes / Revenus récurrents</h2>
     <div class="gabarit-form">
-      <label for="gabarit-type">Type</label>
-      <select id="gabarit-type"><option value="depense">Dépense</option><option value="revenu">Revenu</option></select>
-      <label for="gabarit-libelle">Libellé</label>
-      <input type="text" id="gabarit-libelle" placeholder="Ex: Loyer">
-      <label for="gabarit-categorie">Catégorie</label>
-      <select id="gabarit-categorie">
-        <option>Alimentation</option><option>Logement</option><option>Transport</option><option>Loisirs</option><option>Salaire</option><option>Autres revenus</option><option>Santé</option><option>Divers</option>
-      </select>
-      <label for="gabarit-mode">Mode</label>
-      <select id="gabarit-mode"><option>Prélèvement</option><option>Virement</option><option>CB</option><option>Chèque</option></select>
-      <label for="gabarit-montant">Montant</label>
-      <input type="number" id="gabarit-montant" step="0.01" min="0.01" placeholder="0.00">
-      <label for="gabarit-jour">Jour du mois</label>
-      <input type="number" id="gabarit-jour" min="1" max="31" value="1">
+      <label for="gabarit-type">Type</label><select id="gabarit-type"><option value="depense">Dépense</option><option value="revenu">Revenu</option></select>
+      <label for="gabarit-libelle">Libellé</label><input type="text" id="gabarit-libelle" placeholder="Ex: Loyer">
+      <label for="gabarit-categorie">Catégorie</label><select id="gabarit-categorie"><option>Alimentation</option><option>Logement</option><option>Transport</option><option>Loisirs</option><option>Salaire</option><option>Autres revenus</option><option>Santé</option><option>Divers</option></select>
+      <label for="gabarit-mode">Mode</label><select id="gabarit-mode"><option>Prélèvement</option><option>Virement</option><option>CB</option><option>Chèque</option></select>
+      <label for="gabarit-montant">Montant</label><input type="number" id="gabarit-montant" step="0.01" min="0.01" placeholder="0.00">
+      <label for="gabarit-jour">Jour du mois</label><input type="number" id="gabarit-jour" min="1" max="31" value="1">
       <button class="btn-save" id="btn-ajout-gabarit">Ajouter ce gabarit</button>
     </div>
-    <h3>Gabarits existants</h3>
-    <ul class="liste-gabarits" id="liste-gabarits"></ul>
+    <h3>Gabarits existants</h3><ul class="liste-gabarits" id="liste-gabarits"></ul>
   </div>
-
-  <!-- Analyse -->
   <div class="contenu-onglet" id="analyse">
     <h2>Analyse des dépenses</h2>
     <div class="filtre-periode">
-      <label>Période :</label>
-      <select id="analyse-periode-type">
-        <option value="12m">12 derniers mois</option>
-        <option value="6m">6 derniers mois</option>
-        <option value="tout">Depuis le début</option>
-        <option value="perso">Personnalisée</option>
-      </select>
-      <span id="periode-perso" style="display:none;">
-        <input type="month" id="analyse-debut"> – <input type="month" id="analyse-fin">
-      </span>
+      <label>Période :</label><select id="analyse-periode-type"><option value="12m">12 derniers mois</option><option value="6m">6 derniers mois</option><option value="tout">Depuis le début</option><option value="perso">Personnalisée</option></select>
+      <span id="periode-perso" style="display:none;"><input type="month" id="analyse-debut"> – <input type="month" id="analyse-fin"></span>
       <button id="btn-actualiser-analyse">Actualiser</button>
     </div>
     <div class="analyse-resume" id="analyse-resultat"></div>
   </div>
 
-  <!-- Modal création d'opération -->
-  <div class="modal-overlay" id="modal-overlay">
-    <div class="modal">
-      <h3>Nouvelle opération</h3>
-      <label for="form-date">Date</label>
-      <input type="date" id="form-date">
-      <label for="form-type">Type</label>
-      <select id="form-type"><option value="depense">Dépense</option><option value="revenu">Revenu</option></select>
-      <label for="form-libelle">Libellé</label>
-      <input type="text" id="form-libelle">
-      <label for="form-categorie">Catégorie</label>
-      <select id="form-categorie"><option>Alimentation</option><option>Logement</option><option>Transport</option><option>Loisirs</option><option>Salaire</option><option>Autres revenus</option><option>Santé</option><option>Divers</option></select>
-      <label for="form-mode">Mode</label>
-      <select id="form-mode"><option>CB</option><option>Prélèvement</option><option>Virement</option><option>Chèque</option><option>Espèces</option></select>
-      <label for="form-montant">Montant (€)</label>
-      <input type="number" id="form-montant" step="0.01" min="0.01">
-      <div class="btn-group">
-        <button class="btn-cancel" id="btn-cancel">Annuler</button>
-        <button class="btn-save" id="btn-save">Enregistrer</button>
-      </div>
-    </div>
-  </div>
+  <!-- Modal création -->
+  <div class="modal-overlay" id="modal-overlay"><div class="modal">
+    <h3>Nouvelle opération</h3>
+    <label for="form-date">Date</label><input type="date" id="form-date">
+    <label for="form-type">Type</label><select id="form-type"><option value="depense">Dépense</option><option value="revenu">Revenu</option></select>
+    <label for="form-libelle">Libellé</label><input type="text" id="form-libelle">
+    <label for="form-categorie">Catégorie</label><select id="form-categorie"><option>Alimentation</option><option>Logement</option><option>Transport</option><option>Loisirs</option><option>Salaire</option><option>Autres revenus</option><option>Santé</option><option>Divers</option></select>
+    <label for="form-mode">Mode</label><select id="form-mode"><option>CB</option><option>Prélèvement</option><option>Virement</option><option>Chèque</option><option>Espèces</option></select>
+    <label for="form-montant">Montant (€)</label><input type="number" id="form-montant" step="0.01" min="0.01">
+    <div class="btn-group"><button class="btn-cancel" id="btn-cancel">Annuler</button><button class="btn-save" id="btn-save">Enregistrer</button></div>
+  </div></div>
 
-  <!-- Modal modification d'une opération -->
-  <div class="modal-overlay" id="modal-modifier-overlay">
-    <div class="modal">
-      <h3>Modifier l'opération</h3>
-      <input type="hidden" id="modif-id">
-      <label for="modif-date">Date</label>
-      <input type="date" id="modif-date">
-      <label for="modif-type">Type</label>
-      <select id="modif-type"><option value="depense">Dépense</option><option value="revenu">Revenu</option></select>
-      <label for="modif-libelle">Libellé</label>
-      <input type="text" id="modif-libelle">
-      <label for="modif-categorie">Catégorie</label>
-      <select id="modif-categorie"><option>Alimentation</option><option>Logement</option><option>Transport</option><option>Loisirs</option><option>Salaire</option><option>Autres revenus</option><option>Santé</option><option>Divers</option></select>
-      <label for="modif-mode">Mode</label>
-      <select id="modif-mode"><option>CB</option><option>Prélèvement</option><option>Virement</option><option>Chèque</option><option>Espèces</option></select>
-      <label for="modif-montant">Montant (€)</label>
-      <input type="number" id="modif-montant" step="0.01" min="0.01">
-      <div class="btn-group">
-        <button class="btn-cancel" id="btn-modif-cancel">Annuler</button>
-        <button class="btn-save" id="btn-modif-save">Enregistrer</button>
-      </div>
-    </div>
-  </div>
+  <!-- Modal modification -->
+  <div class="modal-overlay" id="modal-modifier-overlay"><div class="modal">
+    <h3>Modifier l'opération</h3><input type="hidden" id="modif-id">
+    <label for="modif-date">Date</label><input type="date" id="modif-date">
+    <label for="modif-type">Type</label><select id="modif-type"><option value="depense">Dépense</option><option value="revenu">Revenu</option></select>
+    <label for="modif-libelle">Libellé</label><input type="text" id="modif-libelle">
+    <label for="modif-categorie">Catégorie</label><select id="modif-categorie"><option>Alimentation</option><option>Logement</option><option>Transport</option><option>Loisirs</option><option>Salaire</option><option>Autres revenus</option><option>Santé</option><option>Divers</option></select>
+    <label for="modif-mode">Mode</label><select id="modif-mode"><option>CB</option><option>Prélèvement</option><option>Virement</option><option>Chèque</option><option>Espèces</option></select>
+    <label for="modif-montant">Montant (€)</label><input type="number" id="modif-montant" step="0.01" min="0.01">
+    <div class="btn-group"><button class="btn-cancel" id="btn-modif-cancel">Annuler</button><button class="btn-save" id="btn-modif-save">Enregistrer</button></div>
+  </div></div>
 </div>
 
 <script>
-  // --- IndexedDB ---
-  const DB_NAME = 'suivi-bancaire-db';
-  const DB_VERSION = 1;
-  let db;
+  const DB_NAME = 'suivi-bancaire-db', DB_VERSION = 1; let db;
+  function openDB(){return new Promise((r,j)=>{const q=indexedDB.open(DB_NAME,DB_VERSION);q.onupgradeneeded=e=>{const d=e.target.result;if(!d.objectStoreNames.contains('operations'))d.createObjectStore('operations',{keyPath:'id'});if(!d.objectStoreNames.contains('gabarits'))d.createObjectStore('gabarits',{keyPath:'id'});if(!d.objectStoreNames.contains('ajustement'))d.createObjectStore('ajustement',{keyPath:'cle'});if(!d.objectStoreNames.contains('suppressions'))d.createObjectStore('suppressions',{keyPath:'cle'});};q.onsuccess=e=>{db=e.target.result;r(db);};q.onerror=e=>j(e.target.error);});}
+  function readAll(s){return new Promise((r,j)=>{const t=db.transaction(s,'readonly'),st=t.objectStore(s),q=st.getAll();q.onsuccess=()=>r(q.result||[]);q.onerror=()=>j(q.error);});}
+  function writeRecord(s,r){return new Promise((res,rej)=>{const t=db.transaction(s,'readwrite');t.objectStore(s).put(r);t.oncomplete=()=>res();t.onerror=()=>rej(t.error);});}
+  function deleteRecord(s,id){return new Promise((res,rej)=>{const t=db.transaction(s,'readwrite');t.objectStore(s).delete(id);t.oncomplete=()=>res();t.onerror=()=>rej(t.error);});}
 
-  function openDB() {
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open(DB_NAME, DB_VERSION);
-      request.onupgradeneeded = (e) => {
-        const db = e.target.result;
-        if (!db.objectStoreNames.contains('operations')) db.createObjectStore('operations', { keyPath: 'id' });
-        if (!db.objectStoreNames.contains('gabarits')) db.createObjectStore('gabarits', { keyPath: 'id' });
-        if (!db.objectStoreNames.contains('ajustement')) db.createObjectStore('ajustement', { keyPath: 'cle' });
-        if (!db.objectStoreNames.contains('suppressions')) db.createObjectStore('suppressions', { keyPath: 'cle' });
-      };
-      request.onsuccess = (e) => { db = e.target.result; resolve(db); };
-      request.onerror = (e) => reject(e.target.error);
-    });
-  }
+  let operations=[],gabarits=[],prochainIdOp=1,prochainIdGab=1,moisActuel=new Date().getMonth(),anneeActuelle=new Date().getFullYear(),ajustementSoldeReel=0;
 
-  function readAll(storeName) {
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(storeName, 'readonly');
-      const store = tx.objectStore(storeName);
-      const req = store.getAll();
-      req.onsuccess = () => resolve(req.result || []);
-      req.onerror = () => reject(req.error);
-    });
-  }
+  async function chargerDonnees(){const ops=await readAll('operations'),gabs=await readAll('gabarits'),ajust=await readAll('ajustement');operations=ops;gabarits=gabs;if(ajust.length>0)ajustementSoldeReel=ajust.find(a=>a.cle==='soldeReel')?.valeur||0;prochainIdOp=operations.reduce((m,op)=>Math.max(m,op.id),0)+1;prochainIdGab=gabarits.reduce((m,g)=>Math.max(m,g.id),0)+1;}
+  async function sauvegarderAjustementSolde(){await writeRecord('ajustement',{cle:'soldeReel',valeur:ajustementSoldeReel});}
+  async function writeSuppression(c){await writeRecord('suppressions',{cle:c});}
+  async function readSuppression(c){return new Promise(r=>{const t=db.transaction('suppressions','readonly'),st=t.objectStore('suppressions'),q=st.get(c);q.onsuccess=()=>r(q.result);q.onerror=()=>r(null);});}
 
-  function writeRecord(storeName, record) {
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(storeName, 'readwrite');
-      tx.objectStore(storeName).put(record);
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
-    });
-  }
+  async function genererOperationsPourMois(mois,annee){const moisStr=`${annee}-${String(mois+1).padStart(2,'0')}`,existantes=operations.filter(op=>op.moisGeneration===moisStr&&op.gabaritId),idsExistants=existantes.map(op=>op.gabaritId);for(const gab of gabarits){if(idsExistants.includes(gab.id))continue;const cleSuppr=`gabarit_${gab.id}_${moisStr}`;if(await readSuppression(cleSuppr))continue;const dernierJour=new Date(annee,mois+1,0).getDate(),jour=Math.min(gab.jour,dernierJour),dateStr=`${annee}-${String(mois+1).padStart(2,'0')}-${String(jour).padStart(2,'0')}`,newOp={id:prochainIdOp++,date:dateStr,libelle:gab.libelle,categorie:gab.categorie,mode:gab.mode,montant:gab.montant,type:gab.type,pointe:false,gabaritId:gab.id,moisGeneration:moisStr};operations.push(newOp);await writeRecord('operations',newOp);}}
 
-  function deleteRecord(storeName, id) {
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(storeName, 'readwrite');
-      tx.objectStore(storeName).delete(id);
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
-    });
-  }
+  function trierOperations(){operations.sort((a,b)=>new Date(a.date)-new Date(b.date));}
+  function filtrerOperationsParMois(mois,annee){return operations.filter(op=>{const d=new Date(op.date);return d.getFullYear()===annee&&d.getMonth()===mois;});}
 
-  function clearStore(storeName) {
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(storeName, 'readwrite');
-      tx.objectStore(storeName).clear();
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
-    });
-  }
+  function calculerSoldes(){const soldeReelPointes=operations.filter(op=>op.pointe).reduce((s,op)=>s+(op.type==='revenu'?op.montant:-op.montant),0),soldeActuel=soldeReelPointes+ajustementSoldeReel;
+    const opsPointees=operations.filter(op=>op.pointe);let premierMois={annee:anneeActuelle,mois:moisActuel};if(opsPointees.length>0){opsPointees.sort((a,b)=>new Date(a.date)-new Date(b.date));const d=new Date(opsPointees[0].date);premierMois={annee:d.getFullYear(),mois:d.getMonth()};}
+    const cumul=operations.filter(op=>{const d=new Date(op.date);if(d.getFullYear()<premierMois.annee||(d.getFullYear()===premierMois.annee&&d.getMonth()<premierMois.mois))return false;if(d.getFullYear()>anneeActuelle||(d.getFullYear()===anneeActuelle&&d.getMonth()>moisActuel))return false;return true;}).reduce((s,op)=>s+(op.type==='revenu'?op.montant:-op.montant),0);
+    return{soldeReelAjuste:soldeActuel,resteAVivre:soldeActuel+cumul};}
 
-  // --- État global ---
-  let operations = [];
-  let gabarits = [];
-  let prochainIdOp = 1;
-  let prochainIdGab = 1;
-  let moisActuel = new Date().getMonth();
-  let anneeActuelle = new Date().getFullYear();
-  let ajustementSoldeReel = 0;
-
-  async function chargerDonnees() {
-    const ops = await readAll('operations');
-    const gabs = await readAll('gabarits');
-    const ajust = await readAll('ajustement');
-    operations = ops;
-    gabarits = gabs;
-    if (ajust.length > 0) {
-      ajustementSoldeReel = ajust.find(a => a.cle === 'soldeReel')?.valeur || 0;
+  function afficherLivre(){const opsDuMois=filtrerOperationsParMois(moisActuel,anneeActuelle),corps=document.getElementById('corps-table');corps.innerHTML='';
+    if(opsDuMois.length===0){corps.innerHTML=`<tr><td colspan="10" style="text-align:center;padding:20px;">Aucune opération ce mois</td></tr>`;}else{
+      const soldeReelPointes=operations.filter(op=>op.pointe).reduce((s,op)=>s+(op.type==='revenu'?op.montant:-op.montant),0),soldeInitial=soldeReelPointes+ajustementSoldeReel;
+      // Cumul progressif des opérations non pointées
+      let cumul=0;opsDuMois.forEach((op,idx)=>{
+        if(!op.pointe) cumul+=(op.type==='revenu'?op.montant:-op.montant);
+        const soldeLigne=soldeInitial+cumul,tr=document.createElement('tr');
+        if(op.gabaritId){tr.classList.add('recurrente');
+          if(idx===0||!opsDuMois[idx-1].gabaritId)tr.classList.add('recurrente-first');
+          if(idx===opsDuMois.length-1||!opsDuMois[idx+1]?.gabaritId)tr.classList.add('recurrente-last');}
+        tr.innerHTML=`<td>${new Date(op.date).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'2-digit'})}</td><td><strong>${op.libelle}</strong>${op.gabaritId?' 🔁':''}</td><td>${op.categorie}</td><td>${op.mode}</td><td class="text-right debit">${op.type==='depense'?op.montant.toFixed(2)+' €':''}</td><td class="text-right credit">${op.type==='revenu'?op.montant.toFixed(2)+' €':''}</td><td class="text-right" style="font-weight:500;">${soldeLigne.toFixed(2)} €</td><td class="text-center"><input type="checkbox" class="pointe-checkbox" data-id="${op.id}" ${op.pointe?'checked':''}></td><td class="text-center"><button class="btn-modifier-op" data-id="${op.id}">✏️</button></td><td class="text-center"><button class="btn-supprimer-op" data-id="${op.id}">🗑️</button></td>`;
+        corps.appendChild(tr);});
+      document.querySelectorAll('.pointe-checkbox').forEach(cb=>{cb.addEventListener('change',async function(){const id=parseInt(this.dataset.id),op=operations.find(o=>o.id===id);if(op){op.pointe=this.checked;await writeRecord('operations',op);afficherToutLivre();}});});
+      document.querySelectorAll('.btn-supprimer-op').forEach(btn=>{btn.addEventListener('click',async function(e){e.stopPropagation();const id=parseInt(this.dataset.id);if(confirm('Supprimer cette opération ?')){const op=operations.find(o=>o.id===id);if(op?.gabaritId){const moisStr=op.moisGeneration||`${op.date.slice(0,7)}`;await writeSuppression(`gabarit_${op.gabaritId}_${moisStr}`);}await deleteRecord('operations',id);operations=operations.filter(op=>op.id!==id);afficherToutLivre();}});});
+      document.querySelectorAll('.btn-modifier-op').forEach(btn=>{btn.addEventListener('click',function(e){e.stopPropagation();const id=parseInt(this.dataset.id),op=operations.find(o=>o.id===id);if(op){document.getElementById('modif-id').value=op.id;document.getElementById('modif-date').value=op.date;document.getElementById('modif-type').value=op.type;document.getElementById('modif-libelle').value=op.libelle;document.getElementById('modif-categorie').value=op.categorie;document.getElementById('modif-mode').value=op.mode;document.getElementById('modif-montant').value=op.montant;document.getElementById('modal-modifier-overlay').classList.add('active');}});});
     }
-    prochainIdOp = operations.reduce((max, op) => Math.max(max, op.id), 0) + 1;
-    prochainIdGab = gabarits.reduce((max, g) => Math.max(max, g.id), 0) + 1;
-  }
+    document.getElementById('mois-courant-livre').textContent=new Date(anneeActuelle,moisActuel).toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+    const{soldeReelAjuste,resteAVivre}=calculerSoldes();document.getElementById('solde-reel').textContent=`Solde réel : ${soldeReelAjuste.toFixed(2)} €`;const resteEl=document.getElementById('reste-a-vivre');resteEl.textContent=`Reste à vivre : ${resteAVivre.toFixed(2)} €`;resteEl.className='reste-a-vivre '+(resteAVivre>=0?'positif':'negatif');document.getElementById('ajustement-indicator').style.display=(ajustementSoldeReel!==0)?'inline':'none';
+    const barre=document.getElementById('reste-bar'),maxVal=Math.max(Math.abs(soldeReelAjuste),Math.abs(resteAVivre),1);barre.style.width=Math.min(100,Math.max(0,(resteAVivre/maxVal)*50+50))+'%';barre.className='reste-bar '+(resteAVivre>=0?'positif':'negatif');}
 
-  async function sauvegarderAjustementSolde() {
-    await writeRecord('ajustement', { cle: 'soldeReel', valeur: ajustementSoldeReel });
-  }
+  function afficherToutLivre(){trierOperations();afficherLivre();}
 
-  async function writeSuppression(cle) {
-    await writeRecord('suppressions', { cle });
-  }
+  // Ajustement solde
+  document.getElementById('btn-edit-ajustement').addEventListener('click',()=>{document.getElementById('ajustement-input-container').style.display='flex';document.getElementById('ajustement-montant').value=ajustementSoldeReel||'';document.getElementById('ajustement-montant').focus();});
+  document.getElementById('btn-apply-ajustement').addEventListener('click',async()=>{const val=parseFloat(document.getElementById('ajustement-montant').value);if(isNaN(val)){alert('Valeur invalide');return;}ajustementSoldeReel=val;await sauvegarderAjustementSolde();document.getElementById('ajustement-input-container').style.display='none';afficherToutLivre();});
+  document.getElementById('btn-reset-ajustement').addEventListener('click',async()=>{ajustementSoldeReel=0;await sauvegarderAjustementSolde();document.getElementById('ajustement-montant').value='';document.getElementById('ajustement-input-container').style.display='none';afficherToutLivre();});
 
-  async function readSuppression(cle) {
-    return new Promise((resolve) => {
-      const tx = db.transaction('suppressions', 'readonly');
-      const store = tx.objectStore('suppressions');
-      const req = store.get(cle);
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => resolve(null);
-    });
-  }
+  // Modal modification
+  document.getElementById('btn-modif-save').addEventListener('click',async()=>{const id=parseInt(document.getElementById('modif-id').value),op=operations.find(o=>o.id===id);if(op){op.date=document.getElementById('modif-date').value;op.type=document.getElementById('modif-type').value;op.libelle=document.getElementById('modif-libelle').value.trim();op.categorie=document.getElementById('modif-categorie').value;op.mode=document.getElementById('modif-mode').value;op.montant=parseFloat(document.getElementById('modif-montant').value);if(!op.libelle||isNaN(op.montant)||op.montant<=0){alert('Formulaire invalide');return;}await writeRecord('operations',op);afficherToutLivre();}document.getElementById('modal-modifier-overlay').classList.remove('active');});
+  document.getElementById('btn-modif-cancel').addEventListener('click',()=>{document.getElementById('modal-modifier-overlay').classList.remove('active');});
+  document.getElementById('modal-modifier-overlay').addEventListener('click',e=>{if(e.target===document.getElementById('modal-modifier-overlay'))document.getElementById('modal-modifier-overlay').classList.remove('active');});
 
-  async function genererOperationsPourMois(mois, annee) {
-    const moisStr = `${annee}-${String(mois+1).padStart(2,'0')}`;
-    const existantes = operations.filter(op => op.moisGeneration === moisStr && op.gabaritId);
-    const idsExistants = existantes.map(op => op.gabaritId);
+  // Suppr tout le mois
+  document.getElementById('btn-supprimer-tout').addEventListener('click',async()=>{const opsDuMois=filtrerOperationsParMois(moisActuel,anneeActuelle);if(opsDuMois.length===0){alert('Aucune opération ce mois.');return;}if(confirm(`Supprimer les ${opsDuMois.length} opérations ?`)){for(const op of opsDuMois){if(op.gabaritId)await writeSuppression(`gabarit_${op.gabaritId}_${op.moisGeneration||op.date.slice(0,7)}`);await deleteRecord('operations',op.id);}operations=operations.filter(op=>!opsDuMois.includes(op));afficherToutLivre();}});
 
-    for (const gab of gabarits) {
-      if (idsExistants.includes(gab.id)) continue;
-      const cleSuppr = `gabarit_${gab.id}_${moisStr}`;
-      const dejaSupprime = await readSuppression(cleSuppr);
-      if (dejaSupprime) continue;
+  // Mois
+  const btnPrev=document.getElementById('mois-precedent'),btnNext=document.getElementById('mois-suivant');
+  btnPrev.addEventListener('click',async function(){this.disabled=true;try{moisActuel--;if(moisActuel<0){moisActuel=11;anneeActuelle--;}await genererOperationsPourMois(moisActuel,anneeActuelle);afficherToutLivre();}catch(err){alert('Erreur.');}finally{this.disabled=false;}});
+  btnNext.addEventListener('click',async function(){this.disabled=true;try{moisActuel++;if(moisActuel>11){moisActuel=0;anneeActuelle++;}await genererOperationsPourMois(moisActuel,anneeActuelle);afficherToutLivre();}catch(err){alert('Erreur.');}finally{this.disabled=false;}});
+  document.getElementById('btn-generer').addEventListener('click',async()=>{const existantes=filtrerOperationsParMois(moisActuel,anneeActuelle).filter(op=>op.gabaritId);if(existantes.length>0&&!confirm('Des opérations récurrentes existent déjà. Régénérer ?'))return;await genererOperationsPourMois(moisActuel,anneeActuelle);afficherToutLivre();});
 
-      const dernierJour = new Date(annee, mois+1, 0).getDate();
-      const jour = Math.min(gab.jour, dernierJour);
-      const dateStr = `${annee}-${String(mois+1).padStart(2,'0')}-${String(jour).padStart(2,'0')}`;
-      const newOp = {
-        id: prochainIdOp++,
-        date: dateStr,
-        libelle: gab.libelle,
-        categorie: gab.categorie,
-        mode: gab.mode,
-        montant: gab.montant,
-        type: gab.type,
-        pointe: false,
-        gabaritId: gab.id,
-        moisGeneration: moisStr
-      };
-      operations.push(newOp);
-      await writeRecord('operations', newOp);
-    }
-  }
+  // Gabarits
+  function afficherGabarits(){const liste=document.getElementById('liste-gabarits');liste.innerHTML='';[...gabarits].sort((a,b)=>a.jour-b.jour).forEach(g=>{const li=document.createElement('li');li.className='gabarit-item';li.innerHTML=`<div class="gabarit-info"><strong>${g.libelle}</strong> (${g.type==='revenu'?'Revenu':'Dépense'})<br>${g.categorie} - ${g.mode} - ${g.montant.toFixed(2)} € le ${g.jour}</div><button class="btn-supprimer" data-id="${g.id}">✕</button>`;liste.appendChild(li);});document.querySelectorAll('.btn-supprimer').forEach(b=>{b.addEventListener('click',async function(){const id=parseInt(this.dataset.id);await deleteRecord('gabarits',id);gabarits=gabarits.filter(g=>g.id!==id);afficherGabarits();});});}
+  document.getElementById('btn-ajout-gabarit').addEventListener('click',async()=>{const t=document.getElementById('gabarit-type').value,l=document.getElementById('gabarit-libelle').value.trim(),c=document.getElementById('gabarit-categorie').value,m=document.getElementById('gabarit-mode').value,mt=parseFloat(document.getElementById('gabarit-montant').value),j=parseInt(document.getElementById('gabarit-jour').value,10);if(!l||isNaN(mt)||mt<=0||j<1||j>31){alert('Remplissez tous les champs.');return;}const ng={id:prochainIdGab++,type:t,libelle:l,categorie:c,mode:m,montant:mt,jour:j};gabarits.push(ng);await writeRecord('gabarits',ng);document.getElementById('gabarit-libelle').value='';document.getElementById('gabarit-montant').value='';document.getElementById('gabarit-jour').value='1';afficherGabarits();await genererOperationsPourMois(moisActuel,anneeActuelle);afficherToutLivre();});
 
-  function trierOperations() {
-    operations.sort((a,b) => new Date(a.date) - new Date(b.date));
-  }
+  // Analyse
+  function actualiserAnalyse(){const tp=document.getElementById('analyse-periode-type').value;let debut,fin;const maintenant=new Date();if(tp==='12m'){fin=new Date(maintenant.getFullYear(),maintenant.getMonth()+1,0);debut=new Date(fin.getFullYear(),fin.getMonth()-12,1);}else if(tp==='6m'){fin=new Date(maintenant.getFullYear(),maintenant.getMonth()+1,0);debut=new Date(fin.getFullYear(),fin.getMonth()-6,1);}else if(tp==='tout'){debut=new Date(2000,0,1);fin=new Date(2100,0,1);}else{const ds=document.getElementById('analyse-debut').value,fs=document.getElementById('analyse-fin').value;if(!ds||!fs){document.getElementById('analyse-resultat').innerHTML='<p>Choisissez une plage.</p>';return;}debut=new Date(ds+'-01');fin=new Date(fs+'-01');fin.setMonth(fin.getMonth()+1,0);}
+    const depenses=operations.filter(op=>{const d=new Date(op.date);return op.type==='depense'&&d>=debut&&d<=fin;}),categories={};depenses.forEach(op=>{categories[op.categorie]=(categories[op.categorie]||0)+op.montant;});const tg=Object.values(categories).reduce((s,v)=>s+v,0),dm=(fin.getFullYear()-debut.getFullYear())*12+(fin.getMonth()-debut.getMonth())+1;
+    let h='<table><thead><tr><th>Catégorie</th><th class="text-right">Total</th><th class="text-right">Moy./mois</th><th class="text-right">%</th></tr></thead><tbody>';
+    if(tg===0)h+='<tr><td colspan="4" class="text-center">Aucune dépense.</td></tr>';else Object.entries(categories).sort((a,b)=>b[1]-a[1]).forEach(([cat,t])=>{h+=`<tr><td>${cat}</td><td class="text-right">${t.toFixed(2)} €</td><td class="text-right">${(t/dm).toFixed(2)} €</td><td class="text-right">${(t/tg*100).toFixed(1)} %</td></tr>`;});
+    h+='</tbody></table>';document.getElementById('analyse-resultat').innerHTML=h;}
+  document.getElementById('analyse-periode-type').addEventListener('change',function(){document.getElementById('periode-perso').style.display=this.value==='perso'?'inline':'none';});
+  document.getElementById('btn-actualiser-analyse').addEventListener('click',actualiserAnalyse);
+  function initAnalyseDates(){const m=new Date();document.getElementById('analyse-debut').value=`${m.getFullYear()}-${String(m.getMonth()+1).padStart(2,'0')}`;document.getElementById('analyse-fin').value=`${m.getFullYear()}-${String(m.getMonth()+1).padStart(2,'0')}`;}
 
-  function filtrerOperationsParMois(mois, annee) {
-    return operations.filter(op => {
-      const d = new Date(op.date);
-      return d.getFullYear() === annee && d.getMonth() === mois;
-    });
-  }
+  // Onglets
+  document.querySelectorAll('.onglet').forEach(o=>{o.addEventListener('click',function(){const n=this.dataset.onglet;document.querySelectorAll('.onglet').forEach(x=>x.classList.remove('actif'));this.classList.add('actif');document.querySelectorAll('.contenu-onglet').forEach(x=>x.classList.remove('actif'));document.getElementById(n).classList.add('actif');if(n==='gabarits')afficherGabarits();if(n==='livre')afficherToutLivre();if(n==='analyse')actualiserAnalyse();});});
 
-  function calculerSoldes() {
-    const soldeReelPointes = operations
-      .filter(op => op.pointe)
-      .reduce((sum, op) => sum + (op.type === 'revenu' ? op.montant : -op.montant), 0);
-    const soldeActuel = soldeReelPointes + ajustementSoldeReel;
+  // Modal création
+  const mo=document.getElementById('modal-overlay');document.getElementById('btn-ajout').addEventListener('click',()=>{document.getElementById('form-date').value=new Date().toISOString().slice(0,10);document.getElementById('form-type').value='depense';document.getElementById('form-libelle').value='';document.getElementById('form-montant').value='';mo.classList.add('active');});
+  document.getElementById('btn-cancel').addEventListener('click',()=>mo.classList.remove('active'));mo.addEventListener('click',e=>{if(e.target===mo)mo.classList.remove('active');});
+  document.getElementById('btn-save').addEventListener('click',async()=>{const date=document.getElementById('form-date').value,type=document.getElementById('form-type').value,libelle=document.getElementById('form-libelle').value.trim(),categorie=document.getElementById('form-categorie').value,mode=document.getElementById('form-mode').value,montant=parseFloat(document.getElementById('form-montant').value);if(!libelle||isNaN(montant)||montant<=0){alert('Formulaire invalide');return;}const newOp={id:prochainIdOp++,date,type,libelle,categorie,mode,montant,pointe:false,gabaritId:null,moisGeneration:null};operations.push(newOp);await writeRecord('operations',newOp);trierOperations();afficherToutLivre();mo.classList.remove('active');});
 
-    const opsPointees = operations.filter(op => op.pointe);
-    let premierMoisAvecPointage = { annee: anneeActuelle, mois: moisActuel };
-    if (opsPointees.length > 0) {
-      opsPointees.sort((a, b) => new Date(a.date) - new Date(b.date));
-      const d = new Date(opsPointees[0].date);
-      premierMoisAvecPointage = { annee: d.getFullYear(), mois: d.getMonth() };
-    }
-
-    const cumulToutesOps = operations
-      .filter(op => {
-        const d = new Date(op.date);
-        if (d.getFullYear() < premierMoisAvecPointage.annee) return false;
-        if (d.getFullYear() === premierMoisAvecPointage.annee && d.getMonth() < premierMoisAvecPointage.mois) return false;
-        if (d.getFullYear() > anneeActuelle) return false;
-        if (d.getFullYear() === anneeActuelle && d.getMonth() > moisActuel) return false;
-        return true;
-      })
-      .reduce((sum, op) => sum + (op.type === 'revenu' ? op.montant : -op.montant), 0);
-
-    const resteAVivre = soldeActuel + cumulToutesOps;
-    return { soldeReelAjuste: soldeActuel, resteAVivre };
-  }
-
-  // Calcule le solde progressif en tenant compte de TOUTES les opérations jusqu'à la date
-  function calculerSoldeProgressifGlobal(listeOps) {
-    // Partir du solde actuel (pointé + ajustement)
-    const soldeReelPointes = operations
-      .filter(op => op.pointe)
-      .reduce((sum, op) => sum + (op.type === 'revenu' ? op.montant : -op.montant), 0);
-    let soldeProgressif = soldeReelPointes + ajustementSoldeReel;
-
-    // Appliquer toutes les opérations non pointées dans l'ordre chronologique
-    const toutesOps = operations
-      .filter(op => !op.pointe)
-      .sort((a, b) => new Date(a.date) - new Date(b.date));
-
-    // Pour chaque ligne du mois, on veut le solde après toutes les opérations jusqu'à cette ligne
-    // On reconstruit le tableau des soldes progressifs
-    const soldes = [];
-    let idxNonPointee = 0;
-
-    for (const op of listeOps) {
-      if (!op.pointe) {
-        // Avant cette opération, appliquer toutes les opérations non pointées antérieures déjà passées
-        // Ici on simplifie : on parcourt tout, on cumule les non pointées jusqu'à la date de l'opération courante
-        const cumulJusquaDate = operations
-          .filter(o => !o.pointe && new Date(o.date) <= new Date(op.date))
-          .reduce((sum, o) => sum + (o.type === 'revenu' ? o.montant : -o.montant), 0);
-        soldes.push(soldeReelPointes + ajustementSoldeReel + cumulJusquaDate);
-      } else {
-        soldes.push(soldeReelPointes + ajustementSoldeReel);
-      }
-    }
-    return soldes;
-  }
-
-  function afficherLivre() {
-    const opsDuMois = filtrerOperationsParMois(moisActuel, anneeActuelle);
-    const corps = document.getElementById('corps-table');
-    corps.innerHTML = '';
-
-    if (opsDuMois.length === 0) {
-      corps.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:20px;">Aucune opération ce mois</td></tr>`;
-    } else {
-      // Calculer le solde progressif global
-      const soldeReelPointes = operations
-        .filter(op => op.pointe)
-        .reduce((sum, op) => sum + (op.type === 'revenu' ? op.montant : -op.montant), 0);
-      const soldeInitial = soldeReelPointes + ajustementSoldeReel;
-
-      // Liste de toutes les opérations non pointées triées par date
-      const nonPointeesTriees = operations
-        .filter(op => !op.pointe)
-        .sort((a, b) => new Date(a.date) - new Date(b.date));
-
-      opsDuMois.forEach((op, idx) => {
-        // Calculer le solde au moment de cette ligne
-        let soldeLigne;
-        if (op.pointe) {
-          // Pour une opération pointée, le solde ne change pas (déjà inclus dans soldeInitial)
-          soldeLigne = soldeInitial;
-        } else {
-          // Pour une non pointée, on cumule jusqu'à elle
-          const cumulJusqua = nonPointeesTriees
-            .filter(o => new Date(o.date) <= new Date(op.date))
-            .reduce((s, o) => s + (o.type === 'revenu' ? o.montant : -o.montant), 0);
-          soldeLigne = soldeInitial + cumulJusqua;
-        }
-
-        const tr = document.createElement('tr');
-        // Style pour les opérations récurrentes
-        if (op.gabaritId) {
-          tr.classList.add('recurrente');
-          // Détecter si c'est la première d'un bloc
-          if (idx === 0 || !opsDuMois[idx-1].gabaritId) {
-            tr.classList.add('recurrente-first');
-          }
-        }
-
-        tr.innerHTML = `
-          <td>${new Date(op.date).toLocaleDateString('fr-FR', {day:'2-digit',month:'2-digit',year:'2-digit'})}</td>
-          <td><strong>${op.libelle}</strong>${op.gabaritId ? ' 🔁' : ''}</td>
-          <td>${op.categorie}</td>
-          <td>${op.mode}</td>
-          <td class="text-right debit">${op.type==='depense' ? op.montant.toFixed(2)+' €' : ''}</td>
-          <td class="text-right credit">${op.type==='revenu' ? op.montant.toFixed(2)+' €' : ''}</td>
-          <td class="text-right" style="font-weight:500;">${soldeLigne.toFixed(2)} €</td>
-          <td class="text-center"><input type="checkbox" class="pointe-checkbox" data-id="${op.id}" ${op.pointe ? 'checked' : ''}></td>
-          <td class="text-center"><button class="btn-modifier-op" data-id="${op.id}">✏️</button></td>
-          <td class="text-center"><button class="btn-supprimer-op" data-id="${op.id}">🗑️</button></td>
-        `;
-        corps.appendChild(tr);
-      });
-
-      // Pointage
-      document.querySelectorAll('.pointe-checkbox').forEach(cb => {
-        cb.addEventListener('change', async function(e) {
-          const id = parseInt(this.dataset.id);
-          const op = operations.find(o => o.id === id);
-          if (op) {
-            op.pointe = this.checked;
-            await writeRecord('operations', op);
-            afficherToutLivre();
-          }
-        });
-      });
-
-      // Suppression
-      document.querySelectorAll('.btn-supprimer-op').forEach(btn => {
-        btn.addEventListener('click', async function(e) {
-          e.stopPropagation();
-          const id = parseInt(this.dataset.id);
-          if (confirm('Supprimer cette opération ?')) {
-            const op = operations.find(o => o.id === id);
-            if (op && op.gabaritId) {
-              const moisStr = op.moisGeneration || `${op.date.slice(0,7)}`;
-              await writeSuppression(`gabarit_${op.gabaritId}_${moisStr}`);
-            }
-            await deleteRecord('operations', id);
-            operations = operations.filter(op => op.id !== id);
-            afficherToutLivre();
-          }
-        });
-      });
-
-      // Modification
-      document.querySelectorAll('.btn-modifier-op').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-          e.stopPropagation();
-          const id = parseInt(this.dataset.id);
-          const op = operations.find(o => o.id === id);
-          if (op) {
-            document.getElementById('modif-id').value = op.id;
-            document.getElementById('modif-date').value = op.date;
-            document.getElementById('modif-type').value = op.type;
-            document.getElementById('modif-libelle').value = op.libelle;
-            document.getElementById('modif-categorie').value = op.categorie;
-            document.getElementById('modif-mode').value = op.mode;
-            document.getElementById('modif-montant').value = op.montant;
-            document.getElementById('modal-modifier-overlay').classList.add('active');
-          }
-        });
-      });
-    }
-
-    document.getElementById('mois-courant-livre').textContent = 
-      new Date(anneeActuelle, moisActuel).toLocaleDateString('fr-FR', {month:'long', year:'numeric'});
-
-    const { soldeReelAjuste, resteAVivre } = calculerSoldes();
-    document.getElementById('solde-reel').textContent = `Solde réel : ${soldeReelAjuste.toFixed(2)} €`;
-    const resteEl = document.getElementById('reste-a-vivre');
-    resteEl.textContent = `Reste à vivre : ${resteAVivre.toFixed(2)} €`;
-    resteEl.className = 'reste-a-vivre ' + (resteAVivre >= 0 ? 'positif' : 'negatif');
-    document.getElementById('ajustement-indicator').style.display = (ajustementSoldeReel !== 0) ? 'inline' : 'none';
-
-    // Barre proportionnelle
-    const barre = document.getElementById('reste-bar');
-    const maxVal = Math.max(Math.abs(soldeReelAjuste), Math.abs(resteAVivre), 1);
-    const pct = Math.min(100, Math.max(0, (resteAVivre / maxVal) * 50 + 50));
-    barre.style.width = pct + '%';
-    barre.className = 'reste-bar ' + (resteAVivre >= 0 ? 'positif' : 'negatif');
-  }
-
-  function afficherToutLivre() {
-    trierOperations();
-    afficherLivre();
-  }
-
-  // --- Ajustement du solde réel ---
-  document.getElementById('btn-edit-ajustement').addEventListener('click', () => {
-    document.getElementById('ajustement-input-container').style.display = 'flex';
-    document.getElementById('ajustement-montant').value = ajustementSoldeReel || '';
-    document.getElementById('ajustement-montant').focus();
-  });
-  document.getElementById('btn-apply-ajustement').addEventListener('click', async () => {
-    const val = parseFloat(document.getElementById('ajustement-montant').value);
-    if (isNaN(val)) { alert('Valeur invalide'); return; }
-    ajustementSoldeReel = val;
-    await sauvegarderAjustementSolde();
-    document.getElementById('ajustement-input-container').style.display = 'none';
-    afficherToutLivre();
-  });
-  document.getElementById('btn-reset-ajustement').addEventListener('click', async () => {
-    ajustementSoldeReel = 0;
-    await sauvegarderAjustementSolde();
-    document.getElementById('ajustement-montant').value = '';
-    document.getElementById('ajustement-input-container').style.display = 'none';
-    afficherToutLivre();
-  });
-
-  // --- Modal modification ---
-  document.getElementById('btn-modif-save').addEventListener('click', async () => {
-    const id = parseInt(document.getElementById('modif-id').value);
-    const op = operations.find(o => o.id === id);
-    if (op) {
-      op.date = document.getElementById('modif-date').value;
-      op.type = document.getElementById('modif-type').value;
-      op.libelle = document.getElementById('modif-libelle').value.trim();
-      op.categorie = document.getElementById('modif-categorie').value;
-      op.mode = document.getElementById('modif-mode').value;
-      op.montant = parseFloat(document.getElementById('modif-montant').value);
-      if (!op.libelle || isNaN(op.montant) || op.montant <= 0) { alert('Formulaire invalide'); return; }
-      await writeRecord('operations', op);
-      afficherToutLivre();
-    }
-    document.getElementById('modal-modifier-overlay').classList.remove('active');
-  });
-
-  document.getElementById('btn-modif-cancel').addEventListener('click', () => {
-    document.getElementById('modal-modifier-overlay').classList.remove('active');
-  });
-  document.getElementById('modal-modifier-overlay').addEventListener('click', (e) => {
-    if (e.target === document.getElementById('modal-modifier-overlay')) {
-      document.getElementById('modal-modifier-overlay').classList.remove('active');
-    }
-  });
-
-  // --- Supprimer toutes les opérations du mois ---
-  document.getElementById('btn-supprimer-tout').addEventListener('click', async () => {
-    const opsDuMois = filtrerOperationsParMois(moisActuel, anneeActuelle);
-    if (opsDuMois.length === 0) {
-      alert('Aucune opération à supprimer ce mois.');
-      return;
-    }
-    if (confirm(`Supprimer définitivement les ${opsDuMois.length} opérations de ce mois ?`)) {
-      for (const op of opsDuMois) {
-        if (op.gabaritId) {
-          const moisStr = op.moisGeneration || `${op.date.slice(0,7)}`;
-          await writeSuppression(`gabarit_${op.gabaritId}_${moisStr}`);
-        }
-        await deleteRecord('operations', op.id);
-      }
-      operations = operations.filter(op => !opsDuMois.includes(op));
-      afficherToutLivre();
-    }
-  });
-
-  // --- Mois (robuste) ---
-  const btnPrev = document.getElementById('mois-precedent');
-  const btnNext = document.getElementById('mois-suivant');
-
-  btnPrev.addEventListener('click', async function() {
-    this.disabled = true;
-    try {
-      moisActuel--;
-      if (moisActuel < 0) { moisActuel = 11; anneeActuelle--; }
-      await genererOperationsPourMois(moisActuel, anneeActuelle);
-      afficherToutLivre();
-    } catch (err) {
-      console.error('Erreur mois précédent :', err);
-      alert('Une erreur est survenue. Veuillez réessayer.');
-    } finally {
-      this.disabled = false;
-    }
-  });
-
-  btnNext.addEventListener('click', async function() {
-    this.disabled = true;
-    try {
-      moisActuel++;
-      if (moisActuel > 11) { moisActuel = 0; anneeActuelle++; }
-      await genererOperationsPourMois(moisActuel, anneeActuelle);
-      afficherToutLivre();
-    } catch (err) {
-      console.error('Erreur mois suivant :', err);
-      alert('Une erreur est survenue. Veuillez réessayer.');
-    } finally {
-      this.disabled = false;
-    }
-  });
-
-  document.getElementById('btn-generer').addEventListener('click', async () => {
-    const existantes = filtrerOperationsParMois(moisActuel, anneeActuelle).filter(op => op.gabaritId);
-    if (existantes.length > 0 && !confirm('Des opérations récurrentes existent déjà pour ce mois. Les régénérer ? (les suppressions seront annulées)')) {
-      return;
-    }
-    await genererOperationsPourMois(moisActuel, anneeActuelle);
-    afficherToutLivre();
-  });
-
-  // --- Gabarits ---
-  function afficherGabarits() {
-    const liste = document.getElementById('liste-gabarits');
-    liste.innerHTML = '';
-    // Trier par jour
-    const sorted = [...gabarits].sort((a, b) => a.jour - b.jour);
-    sorted.forEach(g => {
-      const li = document.createElement('li');
-      li.className = 'gabarit-item';
-      li.innerHTML = `
-        <div class="gabarit-info">
-          <strong>${g.libelle}</strong> (${g.type==='revenu'?'Revenu':'Dépense'})<br>
-          ${g.categorie} - ${g.mode} - ${g.montant.toFixed(2)} € le ${g.jour}
-        </div>
-        <button class="btn-supprimer" data-id="${g.id}">✕</button>
-      `;
-      liste.appendChild(li);
-    });
-    document.querySelectorAll('.btn-supprimer').forEach(btn => {
-      btn.addEventListener('click', async function() {
-        const id = parseInt(this.dataset.id);
-        await deleteRecord('gabarits', id);
-        gabarits = gabarits.filter(g => g.id !== id);
-        afficherGabarits();
-      });
-    });
-  }
-
-  document.getElementById('btn-ajout-gabarit').addEventListener('click', async () => {
-    const type = document.getElementById('gabarit-type').value;
-    const libelle = document.getElementById('gabarit-libelle').value.trim();
-    const categorie = document.getElementById('gabarit-categorie').value;
-    const mode = document.getElementById('gabarit-mode').value;
-    const montant = parseFloat(document.getElementById('gabarit-montant').value);
-    const jour = parseInt(document.getElementById('gabarit-jour').value, 10);
-    if (!libelle || isNaN(montant) || montant <= 0 || jour < 1 || jour > 31) {
-      alert('Remplissez correctement tous les champs.');
-      return;
-    }
-    const newGab = { id: prochainIdGab++, type, libelle, categorie, mode, montant, jour };
-    gabarits.push(newGab);
-    await writeRecord('gabarits', newGab);
-    document.getElementById('gabarit-libelle').value = '';
-    document.getElementById('gabarit-montant').value = '';
-    document.getElementById('gabarit-jour').value = '1';
-    afficherGabarits();
-    await genererOperationsPourMois(moisActuel, anneeActuelle);
-    afficherToutLivre();
-  });
-
-  // --- Analyse ---
-  function actualiserAnalyse() {
-    const typePeriode = document.getElementById('analyse-periode-type').value;
-    let debut, fin;
-    const maintenant = new Date();
-    if (typePeriode === '12m') {
-      fin = new Date(maintenant.getFullYear(), maintenant.getMonth() + 1, 0);
-      debut = new Date(fin.getFullYear(), fin.getMonth() - 12, 1);
-    } else if (typePeriode === '6m') {
-      fin = new Date(maintenant.getFullYear(), maintenant.getMonth() + 1, 0);
-      debut = new Date(fin.getFullYear(), fin.getMonth() - 6, 1);
-    } else if (typePeriode === 'tout') {
-      debut = new Date(2000, 0, 1);
-      fin = new Date(2100, 0, 1);
-    } else if (typePeriode === 'perso') {
-      const debutStr = document.getElementById('analyse-debut').value;
-      const finStr = document.getElementById('analyse-fin').value;
-      if (!debutStr || !finStr) {
-        document.getElementById('analyse-resultat').innerHTML = '<p>Veuillez choisir une plage de dates.</p>';
-        return;
-      }
-      debut = new Date(debutStr + '-01');
-      fin = new Date(finStr + '-01');
-      fin.setMonth(fin.getMonth() + 1, 0);
-    }
-
-    const depenses = operations.filter(op => {
-      const d = new Date(op.date);
-      return op.type === 'depense' && d >= debut && d <= fin;
-    });
-
-    const categories = {};
-    depenses.forEach(op => {
-      categories[op.categorie] = (categories[op.categorie] || 0) + op.montant;
-    });
-    const totalGeneral = Object.values(categories).reduce((s, v) => s + v, 0);
-    const diffMois = (fin.getFullYear() - debut.getFullYear()) * 12 + (fin.getMonth() - debut.getMonth()) + 1;
-
-    let html = '<table><thead><tr><th>Catégorie</th><th class="text-right">Total</th><th class="text-right">Moyenne/mois</th><th class="text-right">%</th></tr></thead><tbody>';
-    if (totalGeneral === 0) {
-      html += '<tr><td colspan="4" class="text-center">Aucune dépense sur cette période.</td></tr>';
-    } else {
-      Object.entries(categories).sort((a,b) => b[1] - a[1]).forEach(([cat, total]) => {
-        html += `<tr><td>${cat}</td><td class="text-right">${total.toFixed(2)} €</td><td class="text-right">${(total/diffMois).toFixed(2)} €</td><td class="text-right">${(total/totalGeneral*100).toFixed(1)} %</td></tr>`;
-      });
-    }
-    html += '</tbody></table>';
-    document.getElementById('analyse-resultat').innerHTML = html;
-  }
-
-  document.getElementById('analyse-periode-type').addEventListener('change', function() {
-    document.getElementById('periode-perso').style.display = this.value === 'perso' ? 'inline' : 'none';
-  });
-  document.getElementById('btn-actualiser-analyse').addEventListener('click', actualiserAnalyse);
-
-  function initAnalyseDates() {
-    const maintenant = new Date();
-    document.getElementById('analyse-debut').value = `${maintenant.getFullYear()}-${String(maintenant.getMonth()+1).padStart(2,'0')}`;
-    document.getElementById('analyse-fin').value = `${maintenant.getFullYear()}-${String(maintenant.getMonth()+1).padStart(2,'0')}`;
-  }
-
-  // --- Onglets ---
-  document.querySelectorAll('.onglet').forEach(onglet => {
-    onglet.addEventListener('click', function() {
-      const nom = this.dataset.onglet;
-      document.querySelectorAll('.onglet').forEach(o => o.classList.remove('actif'));
-      this.classList.add('actif');
-      document.querySelectorAll('.contenu-onglet').forEach(c => c.classList.remove('actif'));
-      document.getElementById(nom).classList.add('actif');
-      if (nom === 'gabarits') afficherGabarits();
-      if (nom === 'livre') afficherToutLivre();
-      if (nom === 'analyse') actualiserAnalyse();
-    });
-  });
-
-  // --- Modal création d'opération ---
-  const modalOverlay = document.getElementById('modal-overlay');
-  document.getElementById('btn-ajout').addEventListener('click', () => {
-    document.getElementById('form-date').value = new Date().toISOString().slice(0,10);
-    document.getElementById('form-type').value = 'depense';
-    document.getElementById('form-libelle').value = '';
-    document.getElementById('form-montant').value = '';
-    modalOverlay.classList.add('active');
-  });
-  document.getElementById('btn-cancel').addEventListener('click', () => modalOverlay.classList.remove('active'));
-  modalOverlay.addEventListener('click', (e) => { if(e.target===modalOverlay) modalOverlay.classList.remove('active'); });
-  document.getElementById('btn-save').addEventListener('click', async () => {
-    const date = document.getElementById('form-date').value;
-    const type = document.getElementById('form-type').value;
-    const libelle = document.getElementById('form-libelle').value.trim();
-    const categorie = document.getElementById('form-categorie').value;
-    const mode = document.getElementById('form-mode').value;
-    const montant = parseFloat(document.getElementById('form-montant').value);
-    if (!libelle || isNaN(montant) || montant <= 0) { alert('Formulaire invalide'); return; }
-    const newOp = { id: prochainIdOp++, date, type, libelle, categorie, mode, montant, pointe: false, gabaritId: null, moisGeneration: null };
-    operations.push(newOp);
-    await writeRecord('operations', newOp);
-    trierOperations();
-    afficherToutLivre();
-    modalOverlay.classList.remove('active');
-  });
-
-  // --- Démarrage ---
-  (async () => {
-    await openDB();
-    await chargerDonnees();
-    await genererOperationsPourMois(moisActuel, anneeActuelle);
-    trierOperations();
-    afficherToutLivre();
-    afficherGabarits();
-    initAnalyseDates();
-  })();
+  // Démarrage
+  (async()=>{await openDB();await chargerDonnees();await genererOperationsPourMois(moisActuel,anneeActuelle);trierOperations();afficherToutLivre();afficherGabarits();initAnalyseDates();})();
 </script>
 </body>
 </html>
