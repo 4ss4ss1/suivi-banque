@@ -8,7 +8,7 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: system-ui, -apple-system, sans-serif; background: #f0f0f0; display: flex; justify-content: center; padding: 10px; color: #333; }
-    .app { max-width: 600px; width: 100%; background: #fffcf5; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); padding: 12px; font-size: 0.9rem; }
+    .app { max-width: 700px; width: 100%; background: #fffcf5; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); padding: 12px; font-size: 0.9rem; }
     .top-bar { display: flex; justify-content: flex-end; margin-bottom: 8px; gap: 6px; flex-wrap: wrap; }
     .top-bar button { background: #f3efe5; border: 1px solid #c0b8a0; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 0.75rem; color: #333; }
     .search-box { width: 100%; padding: 8px; border: 1px solid #c0b8a0; border-radius: 6px; margin-bottom: 8px; font-size: 0.9rem; background: white; }
@@ -18,20 +18,16 @@
     .contenu-onglet { display: none; }
     .contenu-onglet.actif { display: block; }
     .soldes { background: #e9e6df; border: 1px solid #c0b8a0; border-radius: 6px; padding: 8px 12px; margin-bottom: 8px; }
-    .solde-reel-line { display: flex; align-items: center; gap: 6px; }
-    .solde-reel { font-size: 0.85rem; }
-    .reste-a-vivre { font-size: 1.3rem; font-weight: bold; display: block; }
+    .solde-line { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .solde-label { font-size: 0.85rem; }
+    .solde-value { font-weight: bold; }
     .positif { color: #1e5d3f; }
     .negatif { color: #b00020; }
-    .edit-icon { cursor: pointer; font-size: 1rem; }
-    .ajustement-input { margin-top: 6px; display: none; gap: 6px; align-items: center; }
-    .ajustement-input input { width: 100px; padding: 4px; }
-    .ajustement-input button { padding: 4px 8px; font-size: 0.8rem; cursor: pointer; }
     .mois-selector { text-align: center; margin: 8px 0; display: flex; justify-content: center; align-items: center; gap: 10px; }
     .mois-selector button { background: none; border: 1px solid #aaa; border-radius: 4px; padding: 4px 8px; cursor: pointer; }
     .mois-selector span { font-weight: 600; min-width: 110px; display: inline-block; }
     .table-wrapper { overflow-x: auto; margin-bottom: 12px; border: 1px solid #c0b8a0; border-radius: 4px; background: white; }
-    table { width: 100%; border-collapse: collapse; min-width: 650px; }
+    table { width: 100%; border-collapse: collapse; min-width: 700px; }
     th { background: #f3efe5; font-weight: 600; font-size: 0.7rem; text-transform: uppercase; padding: 8px 2px; border-bottom: 2px solid #b0a58c; }
     td { padding: 6px 2px; border-bottom: 1px solid #ddd6c8; font-size: 0.75rem; vertical-align: middle; }
     .text-right { text-align: right; }
@@ -47,10 +43,10 @@
     .btn-supprimer-tout { color: #b00020; border-color: #b00020; }
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 10; }
     .modal-overlay.active { display: flex; }
-    .modal { background: white; border-radius: 8px; padding: 16px; width: 320px; max-width: 90%; box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+    .modal { background: white; border-radius: 8px; padding: 16px; width: 340px; max-width: 90%; box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
     .modal h3 { margin-bottom: 12px; font-size: 1.1rem; color: #333; }
     .modal label { display: block; font-size: 0.8rem; margin-top: 8px; margin-bottom: 2px; color: #333; }
-    .modal input, .modal select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem; }
+    .modal input, .modal select, .modal datalist { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem; }
     .btn-group { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
     .btn-save { background: #1e5d3f; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: 600; }
     .btn-cancel { background: #eee; border: 1px solid #aaa; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
@@ -68,55 +64,70 @@
     .tutorial-overlay.active { display: flex; }
     .tutorial-box { background: white; border-radius: 12px; padding: 24px; max-width: 350px; text-align: center; }
     .tutorial-box button { background: #1e5d3f; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 12px; }
+    .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 30; display: flex; flex-direction: column; gap: 8px; }
+    .toast { padding: 10px 16px; border-radius: 6px; color: white; font-size: 0.85rem; box-shadow: 0 2px 6px rgba(0,0,0,0.2); opacity: 0.95; animation: fadein 0.3s; }
+    .toast-success { background: #1e5d3f; }
+    .toast-error { background: #b00020; }
+    .toast-info { background: #2c3e50; }
+    @keyframes fadein { from { opacity: 0; transform: translateY(20px); } to { opacity: 0.95; transform: translateY(0); } }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+    @media (max-width: 600px) {
+      .table-wrapper { border: none; }
+      table { min-width: auto; width: 100%; }
+      th, td { font-size: 0.7rem; padding: 4px 1px; }
+    }
   </style>
 </head>
 <body>
-<script>
-  // Supprimer définitivement tout ancien Service Worker
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
-  }
-</script>
 
 <div class="app" id="app">
   <div class="top-bar">
-    <button id="export-btn" title="Exporter CSV">📥 CSV</button>
-    <button id="save-btn" title="Sauvegarder">💾 Sauvegarder</button>
-    <button id="restore-btn" title="Restaurer">📂 Restaurer</button>
+    <button id="export-btn" title="Exporter CSV" aria-label="Exporter les opérations en CSV">📥 CSV</button>
+    <button id="save-btn" title="Sauvegarder" aria-label="Sauvegarder toutes les données">💾 Sauvegarder</button>
+    <button id="restore-btn" title="Restaurer" aria-label="Restaurer une sauvegarde">📂 Restaurer</button>
   </div>
-  <input type="text" class="search-box" id="search-input" placeholder="🔍 Rechercher...">
-  <div class="onglets">
-    <div class="onglet actif" data-onglet="livre">📖 Livre</div>
-    <div class="onglet" data-onglet="gabarits">🗓️ Gabarits</div>
-    <div class="onglet" data-onglet="analyse">📊 Analyse</div>
+  <input type="text" class="search-box" id="search-input" placeholder="🔍 Rechercher (tous les mois)..." aria-label="Rechercher une opération">
+  <div class="onglets" role="tablist">
+    <div class="onglet actif" data-onglet="livre" role="tab" aria-selected="true" tabindex="0">📖 Livre</div>
+    <div class="onglet" data-onglet="gabarits" role="tab" aria-selected="false" tabindex="0">🗓️ Gabarits</div>
+    <div class="onglet" data-onglet="analyse" role="tab" aria-selected="false" tabindex="0">📊 Analyse</div>
   </div>
-  <div class="contenu-onglet actif" id="livre">
+
+  <!-- onglet Livre -->
+  <div class="contenu-onglet actif" id="livre" role="tabpanel" aria-labelledby="onglet-livre">
     <h2 style="font-size:1rem;margin-bottom:8px;">Compte Courant</h2>
     <div class="soldes">
-      <div class="solde-reel-line"><span class="solde-reel" id="solde-reel">Solde réel : 0,00 €</span><span class="edit-icon" id="btn-edit-ajustement">✏️</span></div>
-      <div class="ajustement-input" id="ajustement-input-container"><input type="number" id="ajustement-montant" step="0.01"><button id="btn-apply-ajustement">Appliquer</button><button id="btn-reset-ajustement">Réinit.</button></div>
-      <span class="reste-a-vivre" id="reste-a-vivre">Reste à vivre : 0,00 €</span>
+      <div class="solde-line"><label>Solde initial du mois : <input type="number" id="solde-initial-input" step="0.01" style="width:100px; padding:2px;"> €</label><button id="btn-set-solde-initial" style="margin-left:6px; padding:2px 6px;">OK</button></div>
+      <div class="solde-line"><span class="solde-label">Solde pointé :</span> <span class="solde-value" id="solde-pointe">0,00 €</span></div>
+      <div class="solde-line"><span class="solde-label">Solde disponible (toutes opérations) :</span> <span class="solde-value" id="solde-disponible">0,00 €</span></div>
     </div>
-    <div class="mois-selector"><button id="mois-precedent">◀</button><span id="mois-courant-livre">…</span><button id="mois-suivant">▶</button></div>
-    <div class="table-wrapper"><table id="table-operations"><thead><tr><th>Date</th><th>Opération</th><th>Catégorie</th><th>Mode</th><th class="text-right">Débit</th><th class="text-right">Crédit</th><th class="text-right">Solde</th><th class="text-center">Pointé</th><th class="text-center">Mod.</th><th class="text-center">Suppr.</th></tr></thead><tbody id="corps-table"></tbody></table></div>
-    <button class="btn-ajout" id="btn-ajout">+ Nouvelle opération</button>
-    <button class="btn-generer" id="btn-generer">🔄 Générer opérations récurrentes</button>
-    <button class="btn-supprimer-tout" id="btn-supprimer-tout">🗑️ Tout supprimer ce mois</button>
+    <div class="mois-selector"><button id="mois-precedent" aria-label="Mois précédent">◀</button><span id="mois-courant-livre">…</span><button id="mois-suivant" aria-label="Mois suivant">▶</button></div>
+    <div class="table-wrapper"><table id="table-operations">
+      <thead><tr><th>Date</th><th>Opération</th><th>Catégorie</th><th>Mode</th><th class="text-right">Débit</th><th class="text-right">Crédit</th><th class="text-right">Solde</th><th class="text-center">Pointé</th><th class="text-center">Mod.</th><th class="text-center">Suppr.</th></tr></thead>
+      <tbody id="corps-table"></tbody>
+    </table></div>
+    <button class="btn-ajout" id="btn-ajout" aria-label="Ajouter une nouvelle opération">+ Nouvelle opération</button>
+    <button class="btn-generer" id="btn-generer" aria-label="Générer les opérations récurrentes du mois">🔄 Générer opérations récurrentes</button>
+    <button class="btn-supprimer-tout" id="btn-supprimer-tout" aria-label="Supprimer toutes les opérations du mois">🗑️ Tout supprimer ce mois</button>
   </div>
-  <div class="contenu-onglet" id="gabarits">
+
+  <!-- onglet Gabarits -->
+  <div class="contenu-onglet" id="gabarits" role="tabpanel" aria-labelledby="onglet-gabarits">
     <h2>Charges fixes / Revenus récurrents</h2>
     <div class="gabarit-form">
       <label>Type</label><select id="gabarit-type"><option value="depense">Dépense</option><option value="revenu">Revenu</option></select>
       <label>Libellé</label><input type="text" id="gabarit-libelle" placeholder="Ex: Loyer">
-      <label>Catégorie</label><select id="gabarit-categorie"><option>Alimentation</option><option>Logement</option><option>Transport</option><option>Loisirs</option><option>Salaire</option><option>Autres revenus</option></select>
-      <label>Mode</label><select id="gabarit-mode"><option>Prélèvement</option><option>Virement</option><option>CB</option><option>Chèque</option></select>
+      <label>Catégorie</label><input list="gabarit-categories-list" id="gabarit-categorie" placeholder="Ex: Logement"><datalist id="gabarit-categories-list"><option>Alimentation</option><option>Logement</option><option>Transport</option><option>Loisirs</option><option>Salaire</option><option>Autres revenus</option></datalist>
+      <label>Mode</label><input list="gabarit-modes-list" id="gabarit-mode" placeholder="Ex: Prélèvement"><datalist id="gabarit-modes-list"><option>Prélèvement</option><option>Virement</option><option>CB</option><option>Chèque</option></datalist>
       <label>Montant</label><input type="number" id="gabarit-montant" step="0.01" min="0.01">
       <label>Jour du mois</label><input type="number" id="gabarit-jour" min="1" max="31" value="1">
       <button class="btn-save" id="btn-ajout-gabarit">Ajouter ce gabarit</button>
     </div>
     <h3>Gabarits existants</h3><ul class="liste-gabarits" id="liste-gabarits"></ul>
   </div>
-  <div class="contenu-onglet" id="analyse">
+
+  <!-- onglet Analyse -->
+  <div class="contenu-onglet" id="analyse" role="tabpanel" aria-labelledby="onglet-analyse">
     <h2>Analyse des dépenses</h2>
     <div class="filtre-periode">
       <label>Période :</label><select id="analyse-periode-type"><option value="12m">12 mois</option><option value="6m">6 mois</option><option value="tout">Tout</option></select>
@@ -125,121 +136,687 @@
     <div class="analyse-resume" id="analyse-resultat"></div>
   </div>
 
-  <div class="modal-overlay" id="modal-overlay"><div class="modal">
-    <h3>Nouvelle opération</h3>
-    <label>Date</label><input type="date" id="form-date">
-    <label>Type</label><select id="form-type"><option value="depense">Dépense</option><option value="revenu">Revenu</option></select>
-    <label>Libellé</label><input type="text" id="form-libelle">
-    <label>Catégorie</label><select id="form-categorie"><option>Alimentation</option><option>Logement</option><option>Transport</option><option>Loisirs</option></select>
-    <label>Mode</label><select id="form-mode"><option>CB</option><option>Prélèvement</option><option>Virement</option><option>Chèque</option></select>
-    <label>Montant</label><input type="number" id="form-montant" step="0.01" min="0.01">
-    <div class="btn-group"><button class="btn-cancel" id="btn-cancel">Annuler</button><button class="btn-save" id="btn-save">Enregistrer</button></div>
-  </div></div>
+  <!-- Modale ajout -->
+  <div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title-ajout">
+    <div class="modal">
+      <h3 id="modal-title-ajout">Nouvelle opération</h3>
+      <label>Date</label><input type="date" id="form-date">
+      <label>Type</label><select id="form-type"><option value="depense">Dépense</option><option value="revenu">Revenu</option></select>
+      <label>Libellé</label><input type="text" id="form-libelle">
+      <label>Catégorie</label><input list="categories-list" id="form-categorie" placeholder="Ex: Alimentation"><datalist id="categories-list"><option>Alimentation</option><option>Logement</option><option>Transport</option><option>Loisirs</option></datalist>
+      <label>Mode</label><input list="modes-list" id="form-mode" placeholder="Ex: CB"><datalist id="modes-list"><option>CB</option><option>Prélèvement</option><option>Virement</option><option>Chèque</option></datalist>
+      <label>Montant</label><input type="number" id="form-montant" step="0.01" min="0.01">
+      <div class="btn-group"><button class="btn-cancel" id="btn-cancel">Annuler</button><button class="btn-save" id="btn-save">Enregistrer</button></div>
+    </div>
+  </div>
 
-  <div class="modal-overlay" id="modal-modifier-overlay"><div class="modal">
-    <h3>Modifier</h3><input type="hidden" id="modif-id">
-    <label>Date</label><input type="date" id="modif-date">
-    <label>Type</label><select id="modif-type"><option value="depense">Dépense</option><option value="revenu">Revenu</option></select>
-    <label>Libellé</label><input type="text" id="modif-libelle">
-    <label>Catégorie</label><select id="modif-categorie"><option>Alimentation</option><option>Logement</option><option>Transport</option><option>Loisirs</option></select>
-    <label>Mode</label><select id="modif-mode"><option>CB</option><option>Prélèvement</option><option>Virement</option><option>Chèque</option></select>
-    <label>Montant</label><input type="number" id="modif-montant" step="0.01" min="0.01">
-    <div class="btn-group"><button class="btn-cancel" id="btn-modif-cancel">Annuler</button><button class="btn-save" id="btn-modif-save">Enregistrer</button></div>
-  </div></div>
+  <!-- Modale modification -->
+  <div class="modal-overlay" id="modal-modifier-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title-modif">
+    <div class="modal">
+      <h3 id="modal-title-modif">Modifier</h3><input type="hidden" id="modif-id">
+      <label>Date</label><input type="date" id="modif-date">
+      <label>Type</label><select id="modif-type"><option value="depense">Dépense</option><option value="revenu">Revenu</option></select>
+      <label>Libellé</label><input type="text" id="modif-libelle">
+      <label>Catégorie</label><input list="categories-list-modif" id="modif-categorie" placeholder="Ex: Alimentation"><datalist id="categories-list-modif"></datalist>
+      <label>Mode</label><input list="modes-list-modif" id="modif-mode" placeholder="Ex: CB"><datalist id="modes-list-modif"></datalist>
+      <label>Montant</label><input type="number" id="modif-montant" step="0.01" min="0.01">
+      <label><input type="checkbox" id="modif-dissocier"> Dissocier du gabarit (opération ponctuelle)</label>
+      <div class="btn-group"><button class="btn-cancel" id="btn-modif-cancel">Annuler</button><button class="btn-save" id="btn-modif-save">Enregistrer</button></div>
+    </div>
+  </div>
 
-  <div class="tutorial-overlay" id="tutorial-overlay"><div class="tutorial-box">
-    <h2>💰 Bienvenue !</h2>
-    <p>1. Gabarits → charges fixes<br>2. Livre → générer le mois<br>3. Pointer avec le relevé</p>
-    <button id="tutorial-ok">Commencer</button>
-  </div></div>
+  <!-- Tutoriel -->
+  <div class="tutorial-overlay" id="tutorial-overlay">
+    <div class="tutorial-box">
+      <h2>💰 Bienvenue !</h2>
+      <p>1. Gabarits → charges fixes<br>2. Livre → générer le mois<br>3. Pointer avec le relevé</p>
+      <button id="tutorial-ok">Commencer</button>
+    </div>
+  </div>
+
+  <!-- Conteneur de toasts -->
+  <div class="toast-container" id="toast-container"></div>
 </div>
 
 <script>
-  // --- Base de données ---
-  const DB_NAME = 'suivi-bancaire-db', DB_VERSION = 1; let db;
-  function openDB(){return new Promise((r,j)=>{const q=indexedDB.open(DB_NAME,DB_VERSION);q.onupgradeneeded=e=>{const d=e.target.result;if(!d.objectStoreNames.contains('operations'))d.createObjectStore('operations',{keyPath:'id'});if(!d.objectStoreNames.contains('gabarits'))d.createObjectStore('gabarits',{keyPath:'id'});if(!d.objectStoreNames.contains('ajustement'))d.createObjectStore('ajustement',{keyPath:'cle'});if(!d.objectStoreNames.contains('suppressions'))d.createObjectStore('suppressions',{keyPath:'cle'});};q.onsuccess=e=>{db=e.target.result;r(db);};q.onerror=e=>j(e.target.error);});}
-  function readAll(s){return new Promise(r=>{const t=db.transaction(s,'readonly'),st=t.objectStore(s),q=st.getAll();q.onsuccess=()=>r(q.result||[]);});}
-  function writeRecord(s,r){return new Promise(res=>{const t=db.transaction(s,'readwrite');t.objectStore(s).put(r);t.oncomplete=()=>res();});}
-  function deleteRecord(s,id){return new Promise(res=>{const t=db.transaction(s,'readwrite');t.objectStore(s).delete(id);t.oncomplete=()=>res();});}
+  (function() {
+    // ---------- Base de données ----------
+    const DB_NAME = 'suivi-bancaire-v2', DB_VERSION = 1;
+    let db;
 
-  let operations=[],gabarits=[],prochainIdOp=1,prochainIdGab=1,moisActuel=new Date().getMonth(),anneeActuelle=new Date().getFullYear(),ajustementSoldeReel=0,searchTerm='';
-
-  async function chargerDonnees(){const ops=await readAll('operations'),gabs=await readAll('gabarits'),ajust=await readAll('ajustement');operations=ops||[];gabarits=gabs||[];if(ajust.length>0)ajustementSoldeReel=ajust.find(a=>a.cle==='soldeReel')?.valeur||0;prochainIdOp=operations.reduce((m,op)=>Math.max(m,op.id),0)+1;prochainIdGab=gabarits.reduce((m,g)=>Math.max(m,g.id),0)+1;}
-  async function sauvegarderAjustement(){await writeRecord('ajustement',{cle:'soldeReel',valeur:ajustementSoldeReel});}
-  async function writeSuppression(c){await writeRecord('suppressions',{cle:c});}
-  async function readSuppression(c){return new Promise(r=>{const t=db.transaction('suppressions','readonly'),st=t.objectStore('suppressions'),q=st.get(c);q.onsuccess=()=>r(q.result);q.onerror=()=>r(null);});}
-
-  async function genererOperationsPourMois(mois,annee){const moisStr=`${annee}-${String(mois+1).padStart(2,'0')}`,existantes=operations.filter(op=>op.moisGeneration===moisStr&&op.gabaritId),idsExistants=existantes.map(op=>op.gabaritId);for(const gab of gabarits){if(idsExistants.includes(gab.id))continue;const cleSuppr=`gabarit_${gab.id}_${moisStr}`;if(await readSuppression(cleSuppr))continue;const dernierJour=new Date(annee,mois+1,0).getDate(),jour=Math.min(gab.jour,dernierJour),dateStr=`${annee}-${String(mois+1).padStart(2,'0')}-${String(jour).padStart(2,'0')}`,newOp={id:prochainIdOp++,date:dateStr,libelle:gab.libelle,categorie:gab.categorie,mode:gab.mode,montant:gab.montant,type:gab.type,pointe:false,gabaritId:gab.id,moisGeneration:moisStr};operations.push(newOp);await writeRecord('operations',newOp);}}
-
-  function trierOperations(){operations.sort((a,b)=>new Date(a.date)-new Date(b.date));}
-  function filtrerParMois(mois,annee){return operations.filter(op=>{const d=new Date(op.date);return d.getFullYear()===annee&&d.getMonth()===mois;});}
-
-  function calculerSoldes(){const soldePointe=operations.filter(o=>o.pointe).reduce((s,o)=>s+(o.type==='revenu'?o.montant:-o.montant),0),soldeActuel=soldePointe+ajustementSoldeReel;let premierMois={annee:anneeActuelle,mois:moisActuel};if(operations.length>0){const tri=[...operations].sort((a,b)=>new Date(a.date)-new Date(b.date)),d=new Date(tri[0].date);premierMois={annee:d.getFullYear(),mois:d.getMonth()};}const nonPointees=operations.filter(o=>{if(o.pointe)return false;const d=new Date(o.date);if(d.getFullYear()<premierMois.annee||(d.getFullYear()===premierMois.annee&&d.getMonth()<premierMois.mois))return false;if(d.getFullYear()>anneeActuelle||(d.getFullYear()===anneeActuelle&&d.getMonth()>moisActuel))return false;return true;}).sort((a,b)=>new Date(a.date)-new Date(b.date)),cumul=nonPointees.reduce((s,o)=>s+(o.type==='revenu'?o.montant:-o.montant),0);return{soldeActuel,resteAVivre:soldeActuel+cumul,nonPointees};}
-
-  function getSoldeProgressif(op,base,nonPointees){let cumul=0;for(const o of nonPointees){cumul+=(o.type==='revenu'?o.montant:-o.montant);if(o.id===op.id)break;}return base+cumul;}
-
-  function afficherLivre(){
-    const opsMois=filtrerParMois(moisActuel,anneeActuelle).filter(op=>{if(!searchTerm)return true;const t=searchTerm.toLowerCase();return op.libelle.toLowerCase().includes(t)||op.categorie.toLowerCase().includes(t)||op.mode.toLowerCase().includes(t);});
-    const corps=document.getElementById('corps-table');corps.innerHTML='';
-    const{soldeActuel,resteAVivre,nonPointees}=calculerSoldes();
-    if(opsMois.length===0){corps.innerHTML='<tr><td colspan="10" style="text-align:center;padding:20px;">Aucune opération</td></tr>';}else{
-      const recurrentes=opsMois.filter(o=>o.gabaritId).sort((a,b)=>new Date(a.date)-new Date(b.date)),ponctuelles=opsMois.filter(o=>!o.gabaritId).sort((a,b)=>new Date(a.date)-new Date(b.date));
-      const affichees=[...recurrentes,...ponctuelles];
-      affichees.forEach((op,idx)=>{let soldeLigne;if(op.pointe){const avant=nonPointees.filter(o=>new Date(o.date)<=new Date(op.date));soldeLigne=soldeActuel+avant.reduce((s,o)=>s+(o.type==='revenu'?o.montant:-o.montant),0);}else{soldeLigne=getSoldeProgressif(op,soldeActuel,nonPointees);}
-        const tr=document.createElement('tr');if(op.gabaritId){tr.classList.add('recurrente');if(idx===0||!affichees[idx-1]?.gabaritId)tr.classList.add('recurrente-first');if(idx===affichees.length-1||!affichees[idx+1]?.gabaritId)tr.classList.add('recurrente-last');}
-        tr.innerHTML=`<td>${new Date(op.date).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})}</td><td><strong>${op.libelle}</strong>${op.gabaritId?' 🔁':''}</td><td>${op.categorie}</td><td>${op.mode}</td><td class="text-right debit">${op.type==='depense'?op.montant.toFixed(2)+' €':''}</td><td class="text-right credit">${op.type==='revenu'?op.montant.toFixed(2)+' €':''}</td><td class="text-right">${soldeLigne.toFixed(2)} €</td><td class="text-center"><input type="checkbox" class="pointe-checkbox" data-id="${op.id}" ${op.pointe?'checked':''}></td><td class="text-center"><button class="btn-modifier-op" data-id="${op.id}">✏️</button></td><td class="text-center"><button class="btn-supprimer-op" data-id="${op.id}">🗑️</button></td>`;corps.appendChild(tr);});
-      document.querySelectorAll('.pointe-checkbox').forEach(cb=>{cb.addEventListener('change',async function(){const id=parseInt(this.dataset.id),op=operations.find(o=>o.id===id);if(op){op.pointe=this.checked;await writeRecord('operations',op);afficherTout();}});});
-      document.querySelectorAll('.btn-supprimer-op').forEach(btn=>{btn.addEventListener('click',async function(e){e.stopPropagation();const id=parseInt(this.dataset.id);if(confirm('Supprimer ?')){const op=operations.find(o=>o.id===id);if(op?.gabaritId)await writeSuppression(`gabarit_${op.gabaritId}_${op.moisGeneration||op.date.slice(0,7)}`);await deleteRecord('operations',id);operations=operations.filter(o=>o.id!==id);afficherTout();}});});
-      document.querySelectorAll('.btn-modifier-op').forEach(btn=>{btn.addEventListener('click',function(e){e.stopPropagation();const id=parseInt(this.dataset.id),op=operations.find(o=>o.id===id);if(op){document.getElementById('modif-id').value=op.id;document.getElementById('modif-date').value=op.date;document.getElementById('modif-type').value=op.type;document.getElementById('modif-libelle').value=op.libelle;document.getElementById('modif-categorie').value=op.categorie;document.getElementById('modif-mode').value=op.mode;document.getElementById('modif-montant').value=op.montant;document.getElementById('modal-modifier-overlay').classList.add('active');}});});
+    function openDB() {
+      return new Promise((resolve, reject) => {
+        const q = indexedDB.open(DB_NAME, DB_VERSION);
+        q.onupgradeneeded = (e) => {
+          const d = e.target.result;
+          if (!d.objectStoreNames.contains('operations')) d.createObjectStore('operations', { keyPath: 'id' });
+          if (!d.objectStoreNames.contains('gabarits')) d.createObjectStore('gabarits', { keyPath: 'id' });
+          if (!d.objectStoreNames.contains('soldesInitiaux')) d.createObjectStore('soldesInitiaux', { keyPath: 'mois' });
+          if (!d.objectStoreNames.contains('suppressions')) d.createObjectStore('suppressions', { keyPath: 'cle' });
+          if (!d.objectStoreNames.contains('meta')) d.createObjectStore('meta', { keyPath: 'cle' });
+        };
+        q.onsuccess = (e) => { db = e.target.result; resolve(db); };
+        q.onerror = (e) => reject(e.target.error);
+      });
     }
-    document.getElementById('mois-courant-livre').textContent=new Date(anneeActuelle,moisActuel).toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
-    document.getElementById('solde-reel').textContent=`Solde réel : ${soldeActuel.toFixed(2)} €`;
-    const resteEl=document.getElementById('reste-a-vivre');resteEl.textContent=`Reste à vivre : ${resteAVivre.toFixed(2)} €`;resteEl.className='reste-a-vivre '+(resteAVivre>=0?'positif':'negatif');
-  }
 
-  function afficherTout(){trierOperations();afficherLivre();}
+    function readAll(storeName) {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(storeName, 'readonly');
+        tx.onerror = () => reject(tx.error);
+        const req = tx.objectStore(storeName).getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => reject(req.error);
+      });
+    }
 
-  document.getElementById('btn-edit-ajustement').addEventListener('click',()=>{document.getElementById('ajustement-input-container').style.display='flex';document.getElementById('ajustement-montant').value=ajustementSoldeReel||'';});
-  document.getElementById('btn-apply-ajustement').addEventListener('click',async()=>{const v=parseFloat(document.getElementById('ajustement-montant').value);if(isNaN(v))return;ajustementSoldeReel=v;await sauvegarderAjustement();document.getElementById('ajustement-input-container').style.display='none';afficherTout();});
-  document.getElementById('btn-reset-ajustement').addEventListener('click',async()=>{ajustementSoldeReel=0;await sauvegarderAjustement();document.getElementById('ajustement-input-container').style.display='none';afficherTout();});
+    function writeRecord(storeName, record) {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(storeName, 'readwrite');
+        tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(tx.error);
+        tx.objectStore(storeName).put(record);
+        tx.oncomplete = () => resolve();
+      });
+    }
 
-  document.getElementById('btn-modif-save').addEventListener('click',async()=>{const id=parseInt(document.getElementById('modif-id').value),op=operations.find(o=>o.id===id);if(op){op.date=document.getElementById('modif-date').value;op.type=document.getElementById('modif-type').value;op.libelle=document.getElementById('modif-libelle').value.trim();op.categorie=document.getElementById('modif-categorie').value;op.mode=document.getElementById('modif-mode').value;op.montant=parseFloat(document.getElementById('modif-montant').value);if(!op.libelle||isNaN(op.montant)||op.montant<=0){alert('Invalide');return;}await writeRecord('operations',op);afficherTout();}document.getElementById('modal-modifier-overlay').classList.remove('active');});
-  document.getElementById('btn-modif-cancel').addEventListener('click',()=>document.getElementById('modal-modifier-overlay').classList.remove('active'));
+    function deleteRecord(storeName, id) {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(storeName, 'readwrite');
+        tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(tx.error);
+        tx.objectStore(storeName).delete(id);
+        tx.oncomplete = () => resolve();
+      });
+    }
 
-  document.getElementById('btn-supprimer-tout').addEventListener('click',async()=>{const ops=filtrerParMois(moisActuel,anneeActuelle);if(!ops.length)return;if(confirm(`Supprimer les ${ops.length} opérations ?`)){for(const op of ops){if(op.gabaritId)await writeSuppression(`gabarit_${op.gabaritId}_${op.moisGeneration||op.date.slice(0,7)}`);await deleteRecord('operations',op.id);}operations=operations.filter(o=>!ops.includes(o));afficherTout();}});
+    function clearStore(storeName) {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(storeName, 'readwrite');
+        tx.onerror = () => reject(tx.error);
+        tx.objectStore(storeName).clear();
+        tx.oncomplete = () => resolve();
+      });
+    }
 
-  document.getElementById('mois-precedent').addEventListener('click',async function(){this.disabled=true;try{moisActuel--;if(moisActuel<0){moisActuel=11;anneeActuelle--;}await genererOperationsPourMois(moisActuel,anneeActuelle);afficherTout();}catch(err){}finally{this.disabled=false;}});
-  document.getElementById('mois-suivant').addEventListener('click',async function(){this.disabled=true;try{moisActuel++;if(moisActuel>11){moisActuel=0;anneeActuelle++;}await genererOperationsPourMois(moisActuel,anneeActuelle);afficherTout();}catch(err){}finally{this.disabled=false;}});
-  document.getElementById('btn-generer').addEventListener('click',async()=>{await genererOperationsPourMois(moisActuel,anneeActuelle);afficherTout();});
+    async function clearAllData() {
+      for (const name of ['operations', 'gabarits', 'soldesInitiaux', 'suppressions', 'meta']) {
+        await clearStore(name);
+      }
+    }
 
-  document.getElementById('search-input').addEventListener('input',function(){searchTerm=this.value;afficherLivre();});
+    // ---------- État global ----------
+    let operations = [], gabarits = [], prochainIdOp = 1, prochainIdGab = 1;
+    let moisActuel = new Date().getMonth();
+    let anneeActuelle = new Date().getFullYear();
+    let searchTerm = '';
+    let soldeInitialCourant = 0; // pour le mois affiché
 
-  function afficherGabarits(){const l=document.getElementById('liste-gabarits');l.innerHTML='';[...gabarits].sort((a,b)=>a.jour-b.jour).forEach(g=>{const li=document.createElement('li');li.className='gabarit-item';li.innerHTML=`<div><strong>${g.libelle}</strong> - ${g.montant.toFixed(2)} € le ${g.jour}</div><button class="btn-supprimer" data-id="${g.id}">✕</button>`;l.appendChild(li);});document.querySelectorAll('.btn-supprimer').forEach(b=>{b.addEventListener('click',async function(){const id=parseInt(this.dataset.id);await deleteRecord('gabarits',id);gabarits=gabarits.filter(g=>g.id!==id);afficherGabarits();});});}
-  document.getElementById('btn-ajout-gabarit').addEventListener('click',async()=>{const t=document.getElementById('gabarit-type').value,l=document.getElementById('gabarit-libelle').value.trim(),c=document.getElementById('gabarit-categorie').value,m=document.getElementById('gabarit-mode').value,mt=parseFloat(document.getElementById('gabarit-montant').value),j=parseInt(document.getElementById('gabarit-jour').value,10);if(!l||isNaN(mt)||mt<=0||j<1||j>31){alert('Champs invalides');return;}const g={id:prochainIdGab++,type:t,libelle:l,categorie:c,mode:m,montant:mt,jour:j};gabarits.push(g);await writeRecord('gabarits',g);document.getElementById('gabarit-libelle').value='';document.getElementById('gabarit-montant').value='';afficherGabarits();await genererOperationsPourMois(moisActuel,anneeActuelle);afficherTout();});
+    // Chargement initial
+    async function chargerDonnees() {
+      [operations, gabarits] = await Promise.all([
+        readAll('operations'),
+        readAll('gabarits')
+      ]);
+      prochainIdOp = operations.reduce((m, op) => Math.max(m, op.id), 0) + 1;
+      prochainIdGab = gabarits.reduce((m, g) => Math.max(m, g.id), 0) + 1;
+      // Charger le solde initial du mois courant
+      const moisStr = `${anneeActuelle}-${String(moisActuel+1).padStart(2,'0')}`;
+      const soldesInitiaux = await readAll('soldesInitiaux');
+      const entry = soldesInitiaux.find(s => s.mois === moisStr);
+      soldeInitialCourant = entry ? entry.valeur : 0;
+      document.getElementById('solde-initial-input').value = soldeInitialCourant;
+    }
 
-  function actualiserAnalyse(){const tp=document.getElementById('analyse-periode-type').value;let debut,fin;const now=new Date();if(tp==='12m'){fin=new Date(now.getFullYear(),now.getMonth()+1,0);debut=new Date(fin.getFullYear(),fin.getMonth()-12,1);}else if(tp==='6m'){fin=new Date(now.getFullYear(),now.getMonth()+1,0);debut=new Date(fin.getFullYear(),fin.getMonth()-6,1);}else{debut=new Date(2000,0,1);fin=new Date(2100,0,1);}
-    const depenses=operations.filter(o=>{const d=new Date(o.date);return o.type==='depense'&&d>=debut&&d<=fin;}),cats={};depenses.forEach(o=>{cats[o.categorie]=(cats[o.categorie]||0)+o.montant;});const total=Object.values(cats).reduce((s,v)=>s+v,0);
-    let html='<table style="width:100%;border-collapse:collapse;"><tr style="border-bottom:2px solid #b0a58c;"><th style="text-align:left;padding:6px;">Catégorie</th><th style="text-align:right;padding:6px;">Total</th><th style="text-align:right;padding:6px;">%</th></tr>';
-    if(!total)html+='<tr><td colspan="3" style="text-align:center;padding:10px;">Aucune dépense</td></tr>';
-    else Object.entries(cats).sort((a,b)=>b[1]-a[1]).forEach(([c,t])=>{html+=`<tr style="border-bottom:1px solid #ddd;"><td style="padding:6px;">${c}</td><td style="text-align:right;padding:6px;">${t.toFixed(2)} €</td><td style="text-align:right;padding:6px;">${(t/total*100).toFixed(1)}%</td></tr>`;});
-    html+='</table>';document.getElementById('analyse-resultat').innerHTML=html;}
-  document.getElementById('btn-actualiser-analyse').addEventListener('click',actualiserAnalyse);
+    // Sauvegarde du solde initial courant
+    async function sauvegarderSoldeInitial(valeur) {
+      const moisStr = `${anneeActuelle}-${String(moisActuel+1).padStart(2,'0')}`;
+      await writeRecord('soldesInitiaux', { mois: moisStr, valeur: valeur });
+    }
 
-  document.querySelectorAll('.onglet').forEach(o=>{o.addEventListener('click',function(){const n=this.dataset.onglet;document.querySelectorAll('.onglet').forEach(x=>x.classList.remove('actif'));this.classList.add('actif');document.querySelectorAll('.contenu-onglet').forEach(x=>x.classList.remove('actif'));document.getElementById(n).classList.add('actif');if(n==='gabarits')afficherGabarits();if(n==='livre')afficherTout();if(n==='analyse')actualiserAnalyse();});});
+    // Suppression avec enregistrement de suppression pour les opérations de gabarit
+    async function supprimerOperation(op) {
+      if (op.gabaritId) {
+        const cle = `gabarit_${op.gabaritId}_${op.moisGeneration || op.date.slice(0,7)}`;
+        await writeRecord('suppressions', { cle: cle });
+      }
+      await deleteRecord('operations', op.id);
+    }
 
-  const mo=document.getElementById('modal-overlay');document.getElementById('btn-ajout').addEventListener('click',()=>{document.getElementById('form-date').value=new Date().toISOString().slice(0,10);document.getElementById('form-type').value='depense';document.getElementById('form-libelle').value='';document.getElementById('form-montant').value='';mo.classList.add('active');});
-  document.getElementById('btn-cancel').addEventListener('click',()=>mo.classList.remove('active'));mo.addEventListener('click',e=>{if(e.target===mo)mo.classList.remove('active');});
-  document.getElementById('btn-save').addEventListener('click',async()=>{const date=document.getElementById('form-date').value,type=document.getElementById('form-type').value,libelle=document.getElementById('form-libelle').value.trim(),categorie=document.getElementById('form-categorie').value,mode=document.getElementById('form-mode').value,montant=parseFloat(document.getElementById('form-montant').value);if(!libelle||isNaN(montant)||montant<=0){alert('Invalide');return;}const op={id:prochainIdOp++,date,type,libelle,categorie,mode,montant,pointe:false,gabaritId:null,moisGeneration:null};operations.push(op);await writeRecord('operations',op);trierOperations();afficherTout();mo.classList.remove('active');});
+    // Génération des opérations récurrentes pour un mois donné
+    async function genererOperationsPourMois(mois, annee) {
+      const moisStr = `${annee}-${String(mois+1).padStart(2,'0')}`;
+      const existantes = operations.filter(op => op.moisGeneration === moisStr && op.gabaritId);
+      const idsExistants = new Set(existantes.map(op => op.gabaritId));
 
-  document.getElementById('export-btn').addEventListener('click',()=>{let csv='Date;Opération;Type;Catégorie;Mode;Montant;Pointé\n';operations.forEach(o=>{csv+=`${o.date};${o.libelle};${o.type};${o.categorie};${o.mode};${o.montant};${o.pointe?'Oui':'Non'}\n`;});const blob=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='suivi.csv';a.click();});
+      const suppressionsList = await readAll('suppressions');
+      const supprSet = new Set(suppressionsList.map(s => s.cle));
 
-  document.getElementById('save-btn').addEventListener('click',async()=>{const d={operations,gabarits,ajustementSoldeReel,prochainIdOp,prochainIdGab};const blob=new Blob([JSON.stringify(d)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sauvegarde.json';a.click();});
+      let ajoutees = 0;
+      for (const gab of gabarits) {
+        if (idsExistants.has(gab.id)) continue;
+        const cleSuppr = `gabarit_${gab.id}_${moisStr}`;
+        if (supprSet.has(cleSuppr)) continue;
 
-  document.getElementById('restore-btn').addEventListener('click',()=>{const i=document.createElement('input');i.type='file';i.accept='.json';i.addEventListener('change',async(e)=>{try{const f=e.target.files[0],t=await f.text(),d=JSON.parse(t);operations=d.operations||[];gabarits=d.gabarits||[];ajustementSoldeReel=d.ajustementSoldeReel||0;prochainIdOp=d.prochainIdOp||1;prochainIdGab=d.prochainIdGab||1;for(const op of operations)await writeRecord('operations',op);for(const gab of gabarits)await writeRecord('gabarits',gab);await sauvegarderAjustement();await genererOperationsPourMois(moisActuel,anneeActuelle);trierOperations();afficherTout();afficherGabarits();alert('Restauré !');}catch(err){alert('Fichier invalide');}});i.click();});
+        const dernierJour = new Date(annee, mois+1, 0).getDate();
+        const jour = Math.min(gab.jour, dernierJour);
+        const dateStr = `${annee}-${String(mois+1).padStart(2,'0')}-${String(jour).padStart(2,'0')}`;
+        const newOp = {
+          id: prochainIdOp++,
+          date: dateStr,
+          libelle: gab.libelle,
+          categorie: gab.categorie,
+          mode: gab.mode,
+          montant: gab.montant,
+          type: gab.type,
+          pointe: false,
+          gabaritId: gab.id,
+          moisGeneration: moisStr
+        };
+        operations.push(newOp);
+        await writeRecord('operations', newOp);
+        ajoutees++;
+      }
+      return ajoutees;
+    }
 
-  if(!localStorage.getItem('tuto')){document.getElementById('tutorial-overlay').classList.add('active');document.getElementById('tutorial-ok').addEventListener('click',()=>{document.getElementById('tutorial-overlay').classList.remove('active');localStorage.setItem('tuto','1');});}
+    function trierOperations() {
+      operations.sort((a, b) => new Date(a.date) - new Date(b.date));
+    }
 
-  (async()=>{await openDB();await chargerDonnees();await genererOperationsPourMois(moisActuel,anneeActuelle);trierOperations();afficherTout();afficherGabarits();})();
+    function filtrerParMois(mois, annee) {
+      return operations.filter(op => {
+        const d = new Date(op.date);
+        return d.getFullYear() === annee && d.getMonth() === mois;
+      });
+    }
+
+    // Calcul des soldes pour l'affichage
+    function calculerSoldesAffiches() {
+      const opsMois = filtrerParMois(moisActuel, anneeActuelle);
+      const opsTriees = [...opsMois].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+      // Solde initial du mois
+      const SI = soldeInitialCourant || 0;
+
+      // Solde pointé = SI + somme des opérations pointées
+      const totalPointe = opsTriees.filter(o => o.pointe).reduce((s, o) => s + (o.type === 'revenu' ? o.montant : -o.montant), 0);
+      const soldePointe = SI + totalPointe;
+
+      // Solde disponible = SI + somme de toutes les opérations (pointées ou non)
+      const totalToutes = opsTriees.reduce((s, o) => s + (o.type === 'revenu' ? o.montant : -o.montant), 0);
+      const soldeDisponible = SI + totalToutes;
+
+      return { soldePointe, soldeDisponible, opsTriees, SI };
+    }
+
+    // Affiche le tableau et les soldes
+    function afficherLivre() {
+      // Filtre recherche
+      const opsMoisFiltrees = filtrerParMois(moisActuel, anneeActuelle).filter(op => {
+        if (!searchTerm) return true;
+        const t = searchTerm.toLowerCase();
+        return op.libelle.toLowerCase().includes(t) || op.categorie.toLowerCase().includes(t) || op.mode.toLowerCase().includes(t);
+      });
+
+      const { soldePointe, soldeDisponible, opsTriees, SI } = calculerSoldesAffiches();
+      // Pour le calcul du solde ligne, on utilise l'ordre chronologique de toutes les opérations du mois (pas seulement filtrées)
+      // Mais l'affichage ne montre que les filtrées. Calculons le solde progressif sur la liste filtrée.
+      const corps = document.getElementById('corps-table');
+      corps.innerHTML = '';
+
+      if (opsMoisFiltrees.length === 0) {
+        corps.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:20px;">Aucune opération</td></tr>';
+      } else {
+        // Tri chronologique des filtrées
+        const sorted = [...opsMoisFiltrees].sort((a, b) => new Date(a.date) - new Date(b.date));
+        let cumul = SI;
+        // On doit calculer le cumul sur l'ensemble des opérations du mois (triées) pour avoir la bonne progression,
+        // mais afficher seulement les filtrées. On va parcourir les opérations triées du mois complet et n'afficher que celles qui passent le filtre.
+        let cumulProgressif = SI;
+        let indexAffichage = 0;
+        for (const op of opsTriees) {
+          const montant = op.type === 'revenu' ? op.montant : -op.montant;
+          cumulProgressif += montant;
+          if (!sorted.includes(op)) continue; // ne passe pas le filtre
+
+          const estRecurrente = !!op.gabaritId;
+          const tr = document.createElement('tr');
+          if (estRecurrente) {
+            tr.classList.add('recurrente');
+            // Marquer les bordures de groupe (premier et dernier)
+            const i = sorted.indexOf(op);
+            const prev = i > 0 ? sorted[i-1] : null;
+            const next = i < sorted.length-1 ? sorted[i+1] : null;
+            if (!prev || !prev.gabaritId) tr.classList.add('recurrente-first');
+            if (!next || !next.gabaritId) tr.classList.add('recurrente-last');
+          }
+          tr.innerHTML = `
+            <td>${new Date(op.date).toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'})}</td>
+            <td><strong>${op.libelle}</strong>${estRecurrente ? ' 🔁' : ''}</td>
+            <td>${op.categorie}</td>
+            <td>${op.mode}</td>
+            <td class="text-right debit">${op.type === 'depense' ? op.montant.toFixed(2)+' €' : ''}</td>
+            <td class="text-right credit">${op.type === 'revenu' ? op.montant.toFixed(2)+' €' : ''}</td>
+            <td class="text-right">${cumulProgressif.toFixed(2)} €</td>
+            <td class="text-center"><input type="checkbox" class="pointe-checkbox" data-id="${op.id}" ${op.pointe ? 'checked' : ''} aria-label="Pointer l'opération"></td>
+            <td class="text-center"><button class="btn-modifier-op" data-id="${op.id}" aria-label="Modifier l'opération">✏️</button></td>
+            <td class="text-center"><button class="btn-supprimer-op" data-id="${op.id}" aria-label="Supprimer l'opération">🗑️</button></td>
+          `;
+          corps.appendChild(tr);
+        }
+      }
+
+      // Mise à jour des soldes affichés
+      document.getElementById('solde-pointe').textContent = `${soldePointe.toFixed(2)} €`;
+      document.getElementById('solde-disponible').textContent = `${soldeDisponible.toFixed(2)} €`;
+      document.getElementById('solde-pointe').className = 'solde-value ' + (soldePointe >= 0 ? 'positif' : 'negatif');
+      document.getElementById('solde-disponible').className = 'solde-value ' + (soldeDisponible >= 0 ? 'positif' : 'negatif');
+
+      document.getElementById('mois-courant-livre').textContent = new Date(anneeActuelle, moisActuel).toLocaleDateString('fr-FR', {month:'long', year:'numeric'});
+
+      // Attacher les événements aux checkbox et boutons
+      document.querySelectorAll('.pointe-checkbox').forEach(cb => {
+        cb.addEventListener('change', async function() {
+          const id = parseInt(this.dataset.id);
+          const op = operations.find(o => o.id === id);
+          if (op) {
+            op.pointe = this.checked;
+            await writeRecord('operations', op);
+            afficherTout();
+          }
+        });
+      });
+
+      document.querySelectorAll('.btn-supprimer-op').forEach(btn => {
+        btn.addEventListener('click', async function(e) {
+          e.stopPropagation();
+          const id = parseInt(this.dataset.id);
+          const op = operations.find(o => o.id === id);
+          if (!op) return;
+          if (!confirm(op.pointe ? '⚠️ Cette opération est pointée. La supprimer peut désynchroniser le rapprochement. Continuer ?' : 'Supprimer cette opération ?')) return;
+          await supprimerOperation(op);
+          operations = operations.filter(o => o.id !== id);
+          afficherTout();
+          showToast('Opération supprimée.', 'info');
+        });
+      });
+
+      document.querySelectorAll('.btn-modifier-op').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const id = parseInt(this.dataset.id);
+          const op = operations.find(o => o.id === id);
+          if (!op) return;
+          document.getElementById('modif-id').value = op.id;
+          document.getElementById('modif-date').value = op.date;
+          document.getElementById('modif-type').value = op.type;
+          document.getElementById('modif-libelle').value = op.libelle;
+          document.getElementById('modif-categorie').value = op.categorie;
+          document.getElementById('modif-mode').value = op.mode;
+          document.getElementById('modif-montant').value = op.montant;
+          document.getElementById('modif-dissocier').checked = false;
+          // Mettre à jour les datalists avec les catégories/modes existants
+          mettreAJourDatalistsModale();
+          document.getElementById('modal-modifier-overlay').classList.add('active');
+          document.getElementById('modif-libelle').focus();
+        });
+      });
+    }
+
+    function afficherTout() {
+      trierOperations();
+      afficherLivre();
+    }
+
+    // Gestion des catégories et modes pour les datalists
+    function getListePersonnalisee(champ) {
+      const ensemble = new Set();
+      operations.forEach(op => ensemble.add(op[champ]));
+      gabarits.forEach(g => ensemble.add(g[champ]));
+      return Array.from(ensemble).sort();
+    }
+
+    function remplirDatalist(datalistId, options) {
+      const dl = document.getElementById(datalistId);
+      if (!dl) return;
+      dl.innerHTML = '';
+      options.forEach(opt => {
+        const o = document.createElement('option');
+        o.value = opt;
+        dl.appendChild(o);
+      });
+    }
+
+    function mettreAJourDatalistsModale() {
+      remplirDatalist('categories-list-modif', getListePersonnalisee('categorie'));
+      remplirDatalist('modes-list-modif', getListePersonnalisee('mode'));
+    }
+
+    // Toasts
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      toast.textContent = message;
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    // ---------- Événements ----------
+    document.getElementById('btn-set-solde-initial').addEventListener('click', async () => {
+      const val = parseFloat(document.getElementById('solde-initial-input').value);
+      if (isNaN(val)) return;
+      soldeInitialCourant = val;
+      await sauvegarderSoldeInitial(val);
+      afficherTout();
+      showToast('Solde initial mis à jour.', 'success');
+    });
+
+    document.getElementById('btn-modif-save').addEventListener('click', async () => {
+      const id = parseInt(document.getElementById('modif-id').value);
+      const op = operations.find(o => o.id === id);
+      if (!op) return;
+      const dissocier = document.getElementById('modif-dissocier').checked;
+      op.date = document.getElementById('modif-date').value;
+      op.type = document.getElementById('modif-type').value;
+      op.libelle = document.getElementById('modif-libelle').value.trim();
+      op.categorie = document.getElementById('modif-categorie').value.trim();
+      op.mode = document.getElementById('modif-mode').value.trim();
+      op.montant = parseFloat(document.getElementById('modif-montant').value);
+      if (!op.libelle || isNaN(op.montant) || op.montant <= 0) { alert('Champs invalides'); return; }
+      if (dissocier) {
+        op.gabaritId = null;
+        op.moisGeneration = null;
+      }
+      await writeRecord('operations', op);
+      document.getElementById('modal-modifier-overlay').classList.remove('active');
+      afficherTout();
+      showToast('Opération modifiée.', 'success');
+    });
+    document.getElementById('btn-modif-cancel').addEventListener('click', () => {
+      document.getElementById('modal-modifier-overlay').classList.remove('active');
+    });
+
+    document.getElementById('btn-supprimer-tout').addEventListener('click', async () => {
+      const ops = filtrerParMois(moisActuel, anneeActuelle);
+      if (!ops.length) return;
+      const pointées = ops.filter(o => o.pointe);
+      const msg = pointées.length > 0 ? `⚠️ ${pointées.length} opération(s) pointée(s) incluse(s). Supprimer toutes les ${ops.length} opérations du mois ?` : `Supprimer les ${ops.length} opérations du mois ?`;
+      if (!confirm(msg)) return;
+      for (const op of ops) {
+        await supprimerOperation(op);
+      }
+      operations = operations.filter(o => !ops.includes(o));
+      afficherTout();
+      showToast('Opérations du mois supprimées.', 'info');
+    });
+
+    document.getElementById('mois-precedent').addEventListener('click', async function() {
+      this.disabled = true;
+      try {
+        moisActuel--;
+        if (moisActuel < 0) { moisActuel = 11; anneeActuelle--; }
+        // Charger le solde initial du nouveau mois
+        const moisStr = `${anneeActuelle}-${String(moisActuel+1).padStart(2,'0')}`;
+        const soldesInitiaux = await readAll('soldesInitiaux');
+        const entry = soldesInitiaux.find(s => s.mois === moisStr);
+        soldeInitialCourant = entry ? entry.valeur : 0;
+        document.getElementById('solde-initial-input').value = soldeInitialCourant;
+        await genererOperationsPourMois(moisActuel, anneeActuelle);
+        afficherTout();
+      } finally { this.disabled = false; }
+    });
+
+    document.getElementById('mois-suivant').addEventListener('click', async function() {
+      this.disabled = true;
+      try {
+        moisActuel++;
+        if (moisActuel > 11) { moisActuel = 0; anneeActuelle++; }
+        const moisStr = `${anneeActuelle}-${String(moisActuel+1).padStart(2,'0')}`;
+        const soldesInitiaux = await readAll('soldesInitiaux');
+        const entry = soldesInitiaux.find(s => s.mois === moisStr);
+        soldeInitialCourant = entry ? entry.valeur : 0;
+        document.getElementById('solde-initial-input').value = soldeInitialCourant;
+        await genererOperationsPourMois(moisActuel, anneeActuelle);
+        afficherTout();
+      } finally { this.disabled = false; }
+    });
+
+    document.getElementById('btn-generer').addEventListener('click', async () => {
+      const nb = await genererOperationsPourMois(moisActuel, anneeActuelle);
+      afficherTout();
+      showToast(nb > 0 ? `${nb} opération(s) générée(s).` : 'Aucune nouvelle opération à générer.', 'success');
+    });
+
+    document.getElementById('search-input').addEventListener('input', function() {
+      searchTerm = this.value;
+      afficherLivre();
+    });
+
+    // Gabarits
+    function afficherGabarits() {
+      const l = document.getElementById('liste-gabarits');
+      l.innerHTML = '';
+      [...gabarits].sort((a, b) => a.jour - b.jour).forEach(g => {
+        const li = document.createElement('li');
+        li.className = 'gabarit-item';
+        li.innerHTML = `<div><strong>${g.libelle}</strong> - ${g.montant.toFixed(2)} € le ${g.jour}</div><button class="btn-supprimer" data-id="${g.id}" aria-label="Supprimer le gabarit">✕</button>`;
+        l.appendChild(li);
+      });
+      document.querySelectorAll('.btn-supprimer').forEach(b => {
+        b.addEventListener('click', async function() {
+          const id = parseInt(this.dataset.id);
+          await deleteRecord('gabarits', id);
+          gabarits = gabarits.filter(g => g.id !== id);
+          afficherGabarits();
+          showToast('Gabarit supprimé.', 'info');
+        });
+      });
+    }
+
+    document.getElementById('btn-ajout-gabarit').addEventListener('click', async () => {
+      const t = document.getElementById('gabarit-type').value;
+      const l = document.getElementById('gabarit-libelle').value.trim();
+      const c = document.getElementById('gabarit-categorie').value.trim();
+      const m = document.getElementById('gabarit-mode').value.trim();
+      const mt = parseFloat(document.getElementById('gabarit-montant').value);
+      const j = parseInt(document.getElementById('gabarit-jour').value, 10);
+      if (!l || !c || !m || isNaN(mt) || mt <= 0 || j < 1 || j > 31) { alert('Champs invalides'); return; }
+      const g = { id: prochainIdGab++, type: t, libelle: l, categorie: c, mode: m, montant: mt, jour: j };
+      gabarits.push(g);
+      await writeRecord('gabarits', g);
+      document.getElementById('gabarit-libelle').value = '';
+      document.getElementById('gabarit-categorie').value = '';
+      document.getElementById('gabarit-mode').value = '';
+      document.getElementById('gabarit-montant').value = '';
+      afficherGabarits();
+      const nb = await genererOperationsPourMois(moisActuel, anneeActuelle);
+      afficherTout();
+      showToast(`Gabarit ajouté. ${nb > 0 ? nb + ' opération(s) générée(s) pour le mois.' : ''}`, 'success');
+    });
+
+    // Analyse
+    async function actualiserAnalyse() {
+      const tp = document.getElementById('analyse-periode-type').value;
+      let debut, fin;
+      const now = new Date();
+      if (tp === '12m') {
+        fin = new Date(now.getFullYear(), now.getMonth()+1, 0);
+        debut = new Date(fin.getFullYear(), fin.getMonth()-12, 1);
+      } else if (tp === '6m') {
+        fin = new Date(now.getFullYear(), now.getMonth()+1, 0);
+        debut = new Date(fin.getFullYear(), fin.getMonth()-6, 1);
+      } else {
+        debut = new Date(2000,0,1);
+        fin = new Date(2100,0,1);
+      }
+      const depenses = operations.filter(o => {
+        const d = new Date(o.date);
+        return o.type === 'depense' && d >= debut && d <= fin;
+      });
+      const cats = {};
+      depenses.forEach(o => { cats[o.categorie] = (cats[o.categorie] || 0) + o.montant; });
+      const total = Object.values(cats).reduce((s, v) => s + v, 0);
+      let html = '<table style="width:100%;border-collapse:collapse;"><tr style="border-bottom:2px solid #b0a58c;"><th style="text-align:left;padding:6px;">Catégorie</th><th style="text-align:right;padding:6px;">Total</th><th style="text-align:right;padding:6px;">%</th></tr>';
+      if (!total) html += '<tr><td colspan="3" style="text-align:center;padding:10px;">Aucune dépense</td></tr>';
+      else Object.entries(cats).sort((a,b) => b[1]-a[1]).forEach(([c, t]) => {
+        html += `<tr style="border-bottom:1px solid #ddd;"><td style="padding:6px;">${c}</td><td style="text-align:right;padding:6px;">${t.toFixed(2)} €</td><td style="text-align:right;padding:6px;">${(t/total*100).toFixed(1)}%</td></tr>`;
+      });
+      html += '</table>';
+      document.getElementById('analyse-resultat').innerHTML = html;
+    }
+    document.getElementById('btn-actualiser-analyse').addEventListener('click', actualiserAnalyse);
+
+    // Changement d'onglet
+    document.querySelectorAll('.onglet').forEach(o => {
+      o.addEventListener('click', function() {
+        const n = this.dataset.onglet;
+        document.querySelectorAll('.onglet').forEach(x => { x.classList.remove('actif'); x.setAttribute('aria-selected', 'false'); });
+        this.classList.add('actif');
+        this.setAttribute('aria-selected', 'true');
+        document.querySelectorAll('.contenu-onglet').forEach(x => x.classList.remove('actif'));
+        document.getElementById(n).classList.add('actif');
+        if (n === 'gabarits') afficherGabarits();
+        if (n === 'livre') afficherTout();
+        if (n === 'analyse') actualiserAnalyse();
+      });
+    });
+
+    // Modale ajout
+    const mo = document.getElementById('modal-overlay');
+    document.getElementById('btn-ajout').addEventListener('click', () => {
+      document.getElementById('form-date').value = new Date().toISOString().slice(0,10);
+      document.getElementById('form-type').value = 'depense';
+      document.getElementById('form-libelle').value = '';
+      document.getElementById('form-categorie').value = '';
+      document.getElementById('form-mode').value = '';
+      document.getElementById('form-montant').value = '';
+      remplirDatalist('categories-list', getListePersonnalisee('categorie'));
+      remplirDatalist('modes-list', getListePersonnalisee('mode'));
+      mo.classList.add('active');
+      document.getElementById('form-libelle').focus();
+    });
+    document.getElementById('btn-cancel').addEventListener('click', () => mo.classList.remove('active'));
+    mo.addEventListener('click', e => { if (e.target === mo) mo.classList.remove('active'); });
+    document.getElementById('btn-save').addEventListener('click', async () => {
+      const date = document.getElementById('form-date').value;
+      const type = document.getElementById('form-type').value;
+      const libelle = document.getElementById('form-libelle').value.trim();
+      const categorie = document.getElementById('form-categorie').value.trim();
+      const mode = document.getElementById('form-mode').value.trim();
+      const montant = parseFloat(document.getElementById('form-montant').value);
+      if (!libelle || !categorie || !mode || isNaN(montant) || montant <= 0) { alert('Champs invalides'); return; }
+      const op = { id: prochainIdOp++, date, type, libelle, categorie, mode, montant, pointe: false, gabaritId: null, moisGeneration: null };
+      operations.push(op);
+      await writeRecord('operations', op);
+      mo.classList.remove('active');
+      trierOperations();
+      afficherTout();
+      showToast('Opération ajoutée.', 'success');
+    });
+    // Fermeture modale avec Échap
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        if (document.getElementById('modal-overlay').classList.contains('active')) {
+          document.getElementById('modal-overlay').classList.remove('active');
+        }
+        if (document.getElementById('modal-modifier-overlay').classList.contains('active')) {
+          document.getElementById('modal-modifier-overlay').classList.remove('active');
+        }
+      }
+    });
+
+    // Export CSV
+    document.getElementById('export-btn').addEventListener('click', () => {
+      let csv = 'Date;Opération;Type;Catégorie;Mode;Montant;Pointé\n';
+      operations.forEach(o => {
+        csv += `${o.date};${o.libelle};${o.type};${o.categorie};${o.mode};${o.montant};${o.pointe?'Oui':'Non'}\n`;
+      });
+      const blob = new Blob([csv], {type: 'text/csv'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'suivi.csv';
+      a.click();
+      showToast('Export CSV effectué.', 'info');
+    });
+
+    // Sauvegarde JSON
+    document.getElementById('save-btn').addEventListener('click', async () => {
+      const soldesInitiaux = await readAll('soldesInitiaux');
+      const suppressions = await readAll('suppressions');
+      const meta = await readAll('meta');
+      const d = { operations, gabarits, soldesInitiaux, suppressions, meta, prochainIdOp, prochainIdGab };
+      const blob = new Blob([JSON.stringify(d)], {type: 'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'sauvegarde.json';
+      a.click();
+      showToast('Sauvegarde effectuée.', 'success');
+    });
+
+    // Restauration JSON
+    document.getElementById('restore-btn').addEventListener('click', () => {
+      const i = document.createElement('input');
+      i.type = 'file';
+      i.accept = '.json';
+      i.addEventListener('change', async (e) => {
+        try {
+          const f = e.target.files[0];
+          const t = await f.text();
+          const d = JSON.parse(t);
+          await clearAllData();
+          operations = d.operations || [];
+          gabarits = d.gabarits || [];
+          prochainIdOp = d.prochainIdOp || 1;
+          prochainIdGab = d.prochainIdGab || 1;
+          for (const op of operations) await writeRecord('operations', op);
+          for (const g of gabarits) await writeRecord('gabarits', g);
+          for (const s of d.soldesInitiaux || []) await writeRecord('soldesInitiaux', s);
+          for (const s of d.suppressions || []) await writeRecord('suppressions', s);
+          for (const m of d.meta || []) await writeRecord('meta', m);
+          // Recharger le solde initial du mois courant
+          const moisStr = `${anneeActuelle}-${String(moisActuel+1).padStart(2,'0')}`;
+          const soldesInitiaux = await readAll('soldesInitiaux');
+          const entry = soldesInitiaux.find(s => s.mois === moisStr);
+          soldeInitialCourant = entry ? entry.valeur : 0;
+          document.getElementById('solde-initial-input').value = soldeInitialCourant;
+          await genererOperationsPourMois(moisActuel, anneeActuelle);
+          trierOperations();
+          afficherTout();
+          afficherGabarits();
+          showToast('Données restaurées avec succès.', 'success');
+        } catch (err) {
+          showToast('Fichier invalide.', 'error');
+        }
+      });
+      i.click();
+    });
+
+    // Tutoriel
+    if (!localStorage.getItem('tuto-v2')) {
+      document.getElementById('tutorial-overlay').classList.add('active');
+      document.getElementById('tutorial-ok').addEventListener('click', () => {
+        document.getElementById('tutorial-overlay').classList.remove('active');
+        localStorage.setItem('tuto-v2', '1');
+      });
+    }
+
+    // Initialisation
+    (async () => {
+      try {
+        await openDB();
+        await chargerDonnees();
+        await genererOperationsPourMois(moisActuel, anneeActuelle);
+        trierOperations();
+        afficherTout();
+        afficherGabarits();
+      } catch (err) {
+        showToast('Erreur de chargement de la base de données.', 'error');
+        console.error(err);
+      }
+    })();
+  })();
 </script>
 </body>
 </html>
