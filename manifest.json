@@ -1,12 +1,18 @@
 {
   "name": "Suivi Bancaire",
-  "short_name": "Banque",
-  "description": "Application de suivi de compte personnel – Budget mensuel, charges récurrentes et analyse de dépenses.",
+  "short_name": "SuiviBanque",
+  "description": "Application de suivi de compte bancaire personnel.",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#fffcf5",
-  "theme_color": "#fffcf5",
+  "background_color": "#f0f0f0",
+  "theme_color": "#1e5d3f",
   "orientation": "portrait-primary",
-  "icons": [{ "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }],
-  "lang": "fr-FR"
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%231e5d3f'/><text y='.75em' font-size='55' text-anchor='middle' fill='white'>€</text></svg>",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
 }
