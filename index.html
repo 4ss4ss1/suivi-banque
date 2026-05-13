@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Suivi Bancaire</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%231e5d3f'/><text y='.75em' font-size='55' text-anchor='middle' fill='white'>€</text></svg>">
+  <link rel="manifest" href="manifest.json">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: system-ui, -apple-system, sans-serif; background: #f0f0f0; display: flex; justify-content: center; padding: 10px; color: #333; }
@@ -94,43 +95,91 @@
   </div>
 
   <!-- onglet Livre -->
-  <div class="contenu-onglet actif" id="livre" role="tabpanel" aria-labelledby="onglet-livre">
+  <div class="contenu-onglet actif" id="livre" role="tabpanel">
     <h2 style="font-size:1rem;margin-bottom:8px;">Compte Courant</h2>
     <div class="soldes">
-      <div class="solde-line"><label>Solde initial du mois : <input type="number" id="solde-initial-input" step="0.01" style="width:100px; padding:2px;"> €</label><button id="btn-set-solde-initial" style="margin-left:6px; padding:2px 6px;">OK</button></div>
-      <div class="solde-line"><span class="solde-label">Solde pointé :</span> <span class="solde-value" id="solde-pointe">0,00 €</span></div>
-      <div class="solde-line"><span class="solde-label">Solde disponible (toutes opérations) :</span> <span class="solde-value" id="solde-disponible">0,00 €</span></div>
+      <div class="solde-line">
+        <label>Solde initial du mois : 
+          <input type="number" id="solde-initial-input" step="0.01" style="width:100px; padding:2px;"> €
+        </label>
+        <button id="btn-set-solde-initial" style="margin-left:6px; padding:2px 6px;">OK</button>
+      </div>
+      <div class="solde-line">
+        <span class="solde-label">Solde pointé :</span> 
+        <span class="solde-value" id="solde-pointe">0,00 €</span>
+      </div>
+      <div class="solde-line">
+        <span class="solde-label">Solde disponible (toutes opérations) :</span> 
+        <span class="solde-value" id="solde-disponible">0,00 €</span>
+      </div>
     </div>
-    <div class="mois-selector"><button id="mois-precedent" aria-label="Mois précédent">◀</button><span id="mois-courant-livre">…</span><button id="mois-suivant" aria-label="Mois suivant">▶</button></div>
-    <div class="table-wrapper"><table id="table-operations">
-      <thead><tr><th>Date</th><th>Opération</th><th>Catégorie</th><th>Mode</th><th class="text-right">Débit</th><th class="text-right">Crédit</th><th class="text-right">Solde</th><th class="text-center">Pointé</th><th class="text-center">Mod.</th><th class="text-center">Suppr.</th></tr></thead>
-      <tbody id="corps-table"></tbody>
-    </table></div>
+    <div class="mois-selector">
+      <button id="mois-precedent" aria-label="Mois précédent">◀</button>
+      <span id="mois-courant-livre">…</span>
+      <button id="mois-suivant" aria-label="Mois suivant">▶</button>
+    </div>
+    <div class="table-wrapper">
+      <table id="table-operations">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Opération</th>
+            <th>Catégorie</th>
+            <th>Mode</th>
+            <th class="text-right">Débit</th>
+            <th class="text-right">Crédit</th>
+            <th class="text-right">Solde</th>
+            <th class="text-center">Pointé</th>
+            <th class="text-center">Mod.</th>
+            <th class="text-center">Suppr.</th>
+          </tr>
+        </thead>
+        <tbody id="corps-table"></tbody>
+      </table>
+    </div>
     <button class="btn-ajout" id="btn-ajout" aria-label="Ajouter une nouvelle opération">+ Nouvelle opération</button>
     <button class="btn-generer" id="btn-generer" aria-label="Générer les opérations récurrentes du mois">🔄 Générer opérations récurrentes</button>
     <button class="btn-supprimer-tout" id="btn-supprimer-tout" aria-label="Supprimer toutes les opérations du mois">🗑️ Tout supprimer ce mois</button>
   </div>
 
   <!-- onglet Gabarits -->
-  <div class="contenu-onglet" id="gabarits" role="tabpanel" aria-labelledby="onglet-gabarits">
+  <div class="contenu-onglet" id="gabarits" role="tabpanel">
     <h2>Charges fixes / Revenus récurrents</h2>
     <div class="gabarit-form">
-      <label>Type</label><select id="gabarit-type"><option value="depense">Dépense</option><option value="revenu">Revenu</option></select>
-      <label>Libellé</label><input type="text" id="gabarit-libelle" placeholder="Ex: Loyer">
-      <label>Catégorie</label><input list="gabarit-categories-list" id="gabarit-categorie" placeholder="Ex: Logement"><datalist id="gabarit-categories-list"><option>Alimentation</option><option>Logement</option><option>Transport</option><option>Loisirs</option><option>Salaire</option><option>Autres revenus</option></datalist>
-      <label>Mode</label><input list="gabarit-modes-list" id="gabarit-mode" placeholder="Ex: Prélèvement"><datalist id="gabarit-modes-list"><option>Prélèvement</option><option>Virement</option><option>CB</option><option>Chèque</option></datalist>
-      <label>Montant</label><input type="number" id="gabarit-montant" step="0.01" min="0.01">
-      <label>Jour du mois</label><input type="number" id="gabarit-jour" min="1" max="31" value="1">
+      <label>Type</label>
+      <select id="gabarit-type"><option value="depense">Dépense</option><option value="revenu">Revenu</option></select>
+      <label>Libellé</label>
+      <input type="text" id="gabarit-libelle" placeholder="Ex: Loyer">
+      <label>Catégorie</label>
+      <input list="gabarit-categories-list" id="gabarit-categorie" placeholder="Ex: Logement">
+      <datalist id="gabarit-categories-list">
+        <option>Alimentation</option><option>Logement</option><option>Transport</option><option>Loisirs</option><option>Salaire</option><option>Autres revenus</option>
+      </datalist>
+      <label>Mode</label>
+      <input list="gabarit-modes-list" id="gabarit-mode" placeholder="Ex: Prélèvement">
+      <datalist id="gabarit-modes-list">
+        <option>Prélèvement</option><option>Virement</option><option>CB</option><option>Chèque</option>
+      </datalist>
+      <label>Montant</label>
+      <input type="number" id="gabarit-montant" step="0.01" min="0.01">
+      <label>Jour du mois</label>
+      <input type="number" id="gabarit-jour" min="1" max="31" value="1">
       <button class="btn-save" id="btn-ajout-gabarit">Ajouter ce gabarit</button>
     </div>
-    <h3>Gabarits existants</h3><ul class="liste-gabarits" id="liste-gabarits"></ul>
+    <h3>Gabarits existants</h3>
+    <ul class="liste-gabarits" id="liste-gabarits"></ul>
   </div>
 
   <!-- onglet Analyse -->
-  <div class="contenu-onglet" id="analyse" role="tabpanel" aria-labelledby="onglet-analyse">
+  <div class="contenu-onglet" id="analyse" role="tabpanel">
     <h2>Analyse des dépenses</h2>
     <div class="filtre-periode">
-      <label>Période :</label><select id="analyse-periode-type"><option value="12m">12 mois</option><option value="6m">6 mois</option><option value="tout">Tout</option></select>
+      <label>Période :</label>
+      <select id="analyse-periode-type">
+        <option value="12m">12 mois</option>
+        <option value="6m">6 mois</option>
+        <option value="tout">Tout</option>
+      </select>
       <button id="btn-actualiser-analyse">Actualiser</button>
     </div>
     <div class="analyse-resume" id="analyse-resultat"></div>
@@ -143,25 +192,40 @@
       <label>Date</label><input type="date" id="form-date">
       <label>Type</label><select id="form-type"><option value="depense">Dépense</option><option value="revenu">Revenu</option></select>
       <label>Libellé</label><input type="text" id="form-libelle">
-      <label>Catégorie</label><input list="categories-list" id="form-categorie" placeholder="Ex: Alimentation"><datalist id="categories-list"><option>Alimentation</option><option>Logement</option><option>Transport</option><option>Loisirs</option></datalist>
-      <label>Mode</label><input list="modes-list" id="form-mode" placeholder="Ex: CB"><datalist id="modes-list"><option>CB</option><option>Prélèvement</option><option>Virement</option><option>Chèque</option></datalist>
+      <label>Catégorie</label>
+      <input list="categories-list" id="form-categorie" placeholder="Ex: Alimentation">
+      <datalist id="categories-list"></datalist>
+      <label>Mode</label>
+      <input list="modes-list" id="form-mode" placeholder="Ex: CB">
+      <datalist id="modes-list"></datalist>
       <label>Montant</label><input type="number" id="form-montant" step="0.01" min="0.01">
-      <div class="btn-group"><button class="btn-cancel" id="btn-cancel">Annuler</button><button class="btn-save" id="btn-save">Enregistrer</button></div>
+      <div class="btn-group">
+        <button class="btn-cancel" id="btn-cancel">Annuler</button>
+        <button class="btn-save" id="btn-save">Enregistrer</button>
+      </div>
     </div>
   </div>
 
   <!-- Modale modification -->
   <div class="modal-overlay" id="modal-modifier-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title-modif">
     <div class="modal">
-      <h3 id="modal-title-modif">Modifier</h3><input type="hidden" id="modif-id">
+      <h3 id="modal-title-modif">Modifier</h3>
+      <input type="hidden" id="modif-id">
       <label>Date</label><input type="date" id="modif-date">
       <label>Type</label><select id="modif-type"><option value="depense">Dépense</option><option value="revenu">Revenu</option></select>
       <label>Libellé</label><input type="text" id="modif-libelle">
-      <label>Catégorie</label><input list="categories-list-modif" id="modif-categorie" placeholder="Ex: Alimentation"><datalist id="categories-list-modif"></datalist>
-      <label>Mode</label><input list="modes-list-modif" id="modif-mode" placeholder="Ex: CB"><datalist id="modes-list-modif"></datalist>
+      <label>Catégorie</label>
+      <input list="categories-list-modif" id="modif-categorie" placeholder="Ex: Alimentation">
+      <datalist id="categories-list-modif"></datalist>
+      <label>Mode</label>
+      <input list="modes-list-modif" id="modif-mode" placeholder="Ex: CB">
+      <datalist id="modes-list-modif"></datalist>
       <label>Montant</label><input type="number" id="modif-montant" step="0.01" min="0.01">
       <label><input type="checkbox" id="modif-dissocier"> Dissocier du gabarit (opération ponctuelle)</label>
-      <div class="btn-group"><button class="btn-cancel" id="btn-modif-cancel">Annuler</button><button class="btn-save" id="btn-modif-save">Enregistrer</button></div>
+      <div class="btn-group">
+        <button class="btn-cancel" id="btn-modif-cancel">Annuler</button>
+        <button class="btn-save" id="btn-modif-save">Enregistrer</button>
+      </div>
     </div>
   </div>
 
@@ -250,9 +314,8 @@
     let moisActuel = new Date().getMonth();
     let anneeActuelle = new Date().getFullYear();
     let searchTerm = '';
-    let soldeInitialCourant = 0; // pour le mois affiché
+    let soldeInitialCourant = 0;
 
-    // Chargement initial
     async function chargerDonnees() {
       [operations, gabarits] = await Promise.all([
         readAll('operations'),
@@ -260,7 +323,6 @@
       ]);
       prochainIdOp = operations.reduce((m, op) => Math.max(m, op.id), 0) + 1;
       prochainIdGab = gabarits.reduce((m, g) => Math.max(m, g.id), 0) + 1;
-      // Charger le solde initial du mois courant
       const moisStr = `${anneeActuelle}-${String(moisActuel+1).padStart(2,'0')}`;
       const soldesInitiaux = await readAll('soldesInitiaux');
       const entry = soldesInitiaux.find(s => s.mois === moisStr);
@@ -268,13 +330,11 @@
       document.getElementById('solde-initial-input').value = soldeInitialCourant;
     }
 
-    // Sauvegarde du solde initial courant
     async function sauvegarderSoldeInitial(valeur) {
       const moisStr = `${anneeActuelle}-${String(moisActuel+1).padStart(2,'0')}`;
       await writeRecord('soldesInitiaux', { mois: moisStr, valeur: valeur });
     }
 
-    // Suppression avec enregistrement de suppression pour les opérations de gabarit
     async function supprimerOperation(op) {
       if (op.gabaritId) {
         const cle = `gabarit_${op.gabaritId}_${op.moisGeneration || op.date.slice(0,7)}`;
@@ -283,21 +343,17 @@
       await deleteRecord('operations', op.id);
     }
 
-    // Génération des opérations récurrentes pour un mois donné
     async function genererOperationsPourMois(mois, annee) {
       const moisStr = `${annee}-${String(mois+1).padStart(2,'0')}`;
       const existantes = operations.filter(op => op.moisGeneration === moisStr && op.gabaritId);
       const idsExistants = new Set(existantes.map(op => op.gabaritId));
-
       const suppressionsList = await readAll('suppressions');
       const supprSet = new Set(suppressionsList.map(s => s.cle));
-
       let ajoutees = 0;
       for (const gab of gabarits) {
         if (idsExistants.has(gab.id)) continue;
         const cleSuppr = `gabarit_${gab.id}_${moisStr}`;
         if (supprSet.has(cleSuppr)) continue;
-
         const dernierJour = new Date(annee, mois+1, 0).getDate();
         const jour = Math.min(gab.jour, dernierJour);
         const dateStr = `${annee}-${String(mois+1).padStart(2,'0')}-${String(jour).padStart(2,'0')}`;
@@ -331,60 +387,39 @@
       });
     }
 
-    // Calcul des soldes pour l'affichage
     function calculerSoldesAffiches() {
       const opsMois = filtrerParMois(moisActuel, anneeActuelle);
       const opsTriees = [...opsMois].sort((a, b) => new Date(a.date) - new Date(b.date));
-
-      // Solde initial du mois
       const SI = soldeInitialCourant || 0;
-
-      // Solde pointé = SI + somme des opérations pointées
       const totalPointe = opsTriees.filter(o => o.pointe).reduce((s, o) => s + (o.type === 'revenu' ? o.montant : -o.montant), 0);
       const soldePointe = SI + totalPointe;
-
-      // Solde disponible = SI + somme de toutes les opérations (pointées ou non)
       const totalToutes = opsTriees.reduce((s, o) => s + (o.type === 'revenu' ? o.montant : -o.montant), 0);
       const soldeDisponible = SI + totalToutes;
-
       return { soldePointe, soldeDisponible, opsTriees, SI };
     }
 
-    // Affiche le tableau et les soldes
     function afficherLivre() {
-      // Filtre recherche
       const opsMoisFiltrees = filtrerParMois(moisActuel, anneeActuelle).filter(op => {
         if (!searchTerm) return true;
         const t = searchTerm.toLowerCase();
         return op.libelle.toLowerCase().includes(t) || op.categorie.toLowerCase().includes(t) || op.mode.toLowerCase().includes(t);
       });
-
       const { soldePointe, soldeDisponible, opsTriees, SI } = calculerSoldesAffiches();
-      // Pour le calcul du solde ligne, on utilise l'ordre chronologique de toutes les opérations du mois (pas seulement filtrées)
-      // Mais l'affichage ne montre que les filtrées. Calculons le solde progressif sur la liste filtrée.
       const corps = document.getElementById('corps-table');
       corps.innerHTML = '';
-
       if (opsMoisFiltrees.length === 0) {
         corps.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:20px;">Aucune opération</td></tr>';
       } else {
-        // Tri chronologique des filtrées
         const sorted = [...opsMoisFiltrees].sort((a, b) => new Date(a.date) - new Date(b.date));
-        let cumul = SI;
-        // On doit calculer le cumul sur l'ensemble des opérations du mois (triées) pour avoir la bonne progression,
-        // mais afficher seulement les filtrées. On va parcourir les opérations triées du mois complet et n'afficher que celles qui passent le filtre.
         let cumulProgressif = SI;
-        let indexAffichage = 0;
         for (const op of opsTriees) {
           const montant = op.type === 'revenu' ? op.montant : -op.montant;
           cumulProgressif += montant;
-          if (!sorted.includes(op)) continue; // ne passe pas le filtre
-
+          if (!sorted.includes(op)) continue;
           const estRecurrente = !!op.gabaritId;
           const tr = document.createElement('tr');
           if (estRecurrente) {
             tr.classList.add('recurrente');
-            // Marquer les bordures de groupe (premier et dernier)
             const i = sorted.indexOf(op);
             const prev = i > 0 ? sorted[i-1] : null;
             const next = i < sorted.length-1 ? sorted[i+1] : null;
@@ -406,16 +441,12 @@
           corps.appendChild(tr);
         }
       }
-
-      // Mise à jour des soldes affichés
       document.getElementById('solde-pointe').textContent = `${soldePointe.toFixed(2)} €`;
       document.getElementById('solde-disponible').textContent = `${soldeDisponible.toFixed(2)} €`;
       document.getElementById('solde-pointe').className = 'solde-value ' + (soldePointe >= 0 ? 'positif' : 'negatif');
       document.getElementById('solde-disponible').className = 'solde-value ' + (soldeDisponible >= 0 ? 'positif' : 'negatif');
-
       document.getElementById('mois-courant-livre').textContent = new Date(anneeActuelle, moisActuel).toLocaleDateString('fr-FR', {month:'long', year:'numeric'});
 
-      // Attacher les événements aux checkbox et boutons
       document.querySelectorAll('.pointe-checkbox').forEach(cb => {
         cb.addEventListener('change', async function() {
           const id = parseInt(this.dataset.id);
@@ -456,7 +487,6 @@
           document.getElementById('modif-mode').value = op.mode;
           document.getElementById('modif-montant').value = op.montant;
           document.getElementById('modif-dissocier').checked = false;
-          // Mettre à jour les datalists avec les catégories/modes existants
           mettreAJourDatalistsModale();
           document.getElementById('modal-modifier-overlay').classList.add('active');
           document.getElementById('modif-libelle').focus();
@@ -469,7 +499,6 @@
       afficherLivre();
     }
 
-    // Gestion des catégories et modes pour les datalists
     function getListePersonnalisee(champ) {
       const ensemble = new Set();
       operations.forEach(op => ensemble.add(op[champ]));
@@ -493,7 +522,6 @@
       remplirDatalist('modes-list-modif', getListePersonnalisee('mode'));
     }
 
-    // Toasts
     function showToast(message, type = 'info') {
       const container = document.getElementById('toast-container');
       const toast = document.createElement('div');
@@ -557,7 +585,6 @@
       try {
         moisActuel--;
         if (moisActuel < 0) { moisActuel = 11; anneeActuelle--; }
-        // Charger le solde initial du nouveau mois
         const moisStr = `${anneeActuelle}-${String(moisActuel+1).padStart(2,'0')}`;
         const soldesInitiaux = await readAll('soldesInitiaux');
         const entry = soldesInitiaux.find(s => s.mois === moisStr);
@@ -594,7 +621,6 @@
       afficherLivre();
     });
 
-    // Gabarits
     function afficherGabarits() {
       const l = document.getElementById('liste-gabarits');
       l.innerHTML = '';
@@ -636,7 +662,6 @@
       showToast(`Gabarit ajouté. ${nb > 0 ? nb + ' opération(s) générée(s) pour le mois.' : ''}`, 'success');
     });
 
-    // Analyse
     async function actualiserAnalyse() {
       const tp = document.getElementById('analyse-periode-type').value;
       let debut, fin;
@@ -668,7 +693,6 @@
     }
     document.getElementById('btn-actualiser-analyse').addEventListener('click', actualiserAnalyse);
 
-    // Changement d'onglet
     document.querySelectorAll('.onglet').forEach(o => {
       o.addEventListener('click', function() {
         const n = this.dataset.onglet;
@@ -683,7 +707,6 @@
       });
     });
 
-    // Modale ajout
     const mo = document.getElementById('modal-overlay');
     document.getElementById('btn-ajout').addEventListener('click', () => {
       document.getElementById('form-date').value = new Date().toISOString().slice(0,10);
@@ -715,7 +738,7 @@
       afficherTout();
       showToast('Opération ajoutée.', 'success');
     });
-    // Fermeture modale avec Échap
+
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         if (document.getElementById('modal-overlay').classList.contains('active')) {
@@ -727,7 +750,6 @@
       }
     });
 
-    // Export CSV
     document.getElementById('export-btn').addEventListener('click', () => {
       let csv = 'Date;Opération;Type;Catégorie;Mode;Montant;Pointé\n';
       operations.forEach(o => {
@@ -741,7 +763,6 @@
       showToast('Export CSV effectué.', 'info');
     });
 
-    // Sauvegarde JSON
     document.getElementById('save-btn').addEventListener('click', async () => {
       const soldesInitiaux = await readAll('soldesInitiaux');
       const suppressions = await readAll('suppressions');
@@ -755,7 +776,6 @@
       showToast('Sauvegarde effectuée.', 'success');
     });
 
-    // Restauration JSON
     document.getElementById('restore-btn').addEventListener('click', () => {
       const i = document.createElement('input');
       i.type = 'file';
@@ -775,7 +795,6 @@
           for (const s of d.soldesInitiaux || []) await writeRecord('soldesInitiaux', s);
           for (const s of d.suppressions || []) await writeRecord('suppressions', s);
           for (const m of d.meta || []) await writeRecord('meta', m);
-          // Recharger le solde initial du mois courant
           const moisStr = `${anneeActuelle}-${String(moisActuel+1).padStart(2,'0')}`;
           const soldesInitiaux = await readAll('soldesInitiaux');
           const entry = soldesInitiaux.find(s => s.mois === moisStr);
@@ -793,7 +812,6 @@
       i.click();
     });
 
-    // Tutoriel
     if (!localStorage.getItem('tuto-v2')) {
       document.getElementById('tutorial-overlay').classList.add('active');
       document.getElementById('tutorial-ok').addEventListener('click', () => {
@@ -818,5 +836,36 @@
     })();
   })();
 </script>
+
+<!-- Service Worker -->
+<script>
+  if ('serviceWorker' in navigator) {
+    // Nettoyer les anciens SW pour éviter les bugs
+    navigator.serviceWorker.getRegistrations().then(registrations => {
+      for (const registration of registrations) {
+        registration.unregister();
+      }
+    }).then(() => {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js', { scope: './' })
+          .then(registration => {
+            console.log('[SW] Enregistré avec succès, scope:', registration.scope);
+            registration.onupdatefound = () => {
+              const installingWorker = registration.installing;
+              installingWorker.onstatechange = () => {
+                if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  console.log('[SW] Nouvelle version disponible, rechargez la page.');
+                }
+              };
+            };
+          })
+          .catch(err => {
+            console.error('[SW] Échec d\'enregistrement:', err);
+          });
+      });
+    });
+  }
+</script>
+
 </body>
 </html>
