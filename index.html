@@ -37,26 +37,32 @@
     .credit { color: #1e5d3f; }
     .pointe-checkbox { width: 18px; height: 18px; cursor: pointer; accent-color: #1e5d3f; }
     .btn-supprimer-op, .btn-modifier-op { background: none; border: none; font-size: 1.1rem; cursor: pointer; padding: 2px 5px; line-height: 1; }
-    tr.recurrente { border-left: 3px solid #222; border-right: 3px solid #222; background: #f9f9f4; }
-    tr.recurrente-first { border-top: 3px solid #222; }
-    tr.recurrente-last { border-bottom: 3px solid #222; }
+    tr.recurrente { background: #f9f9f4; }
+    /* Les récurrentes sont regroupées en haut, on les encadre */
+    tr.recurrente-first td { border-top: 3px solid #222; }
+    tr.recurrente-last td { border-bottom: 3px solid #222; }
+    tr.recurrente td:first-child { border-left: 3px solid #222; }
+    tr.recurrente td:last-child { border-right: 3px solid #222; }
     .btn-ajout, .btn-generer, .btn-supprimer-tout { width: 100%; padding: 12px; font-size: 0.95rem; border: 1px solid #c0b8a0; background: #f3efe5; color: #333; border-radius: 4px; cursor: pointer; font-weight: 500; margin-top: 6px; }
     .btn-supprimer-tout { color: #b00020; border-color: #b00020; }
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 10; }
     .modal-overlay.active { display: flex; }
-    .modal { background: white; border-radius: 8px; padding: 16px; width: 340px; max-width: 90%; box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+    .modal { background: white; border-radius: 8px; padding: 16px; width: 360px; max-width: 90%; max-height: 90vh; overflow-y: auto; box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
     .modal h3 { margin-bottom: 12px; font-size: 1.1rem; color: #333; }
     .modal label { display: block; font-size: 0.8rem; margin-top: 8px; margin-bottom: 2px; color: #333; }
     .modal input, .modal select, .modal datalist { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem; }
     .btn-group { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
     .btn-save { background: #1e5d3f; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: 600; }
     .btn-cancel { background: #eee; border: 1px solid #aaa; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
-    .gabarit-form { background: white; border: 1px solid #c0b8a0; border-radius: 6px; padding: 12px; margin-bottom: 12px; }
-    .gabarit-form label { display: block; font-size: 0.8rem; margin-top: 6px; margin-bottom: 2px; }
-    .gabarit-form input, .gabarit-form select { width: 100%; padding: 7px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem; }
-    .liste-gabarits { list-style: none; margin-top: 10px; }
-    .gabarit-item { display: flex; justify-content: space-between; align-items: center; background: #fff; border: 1px solid #ddd; padding: 8px; border-radius: 6px; margin-bottom: 6px; }
+    .recurrence-form { background: white; border: 1px solid #c0b8a0; border-radius: 6px; padding: 12px; margin-bottom: 12px; }
+    .recurrence-form label { display: block; font-size: 0.8rem; margin-top: 6px; margin-bottom: 2px; }
+    .recurrence-form input, .recurrence-form select { width: 100%; padding: 7px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem; }
+    .liste-recurrences { list-style: none; margin-top: 10px; }
+    .recurrence-item { display: flex; justify-content: space-between; align-items: center; background: #fff; border: 1px solid #ddd; padding: 8px; border-radius: 6px; margin-bottom: 6px; }
+    .recurrence-item > div { flex: 1; }
+    .recurrence-actions { display: flex; gap: 4px; }
     .btn-supprimer { background: #b00020; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
+    .btn-modifier-recurrence { background: none; border: 1px solid #aaa; border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 0.9rem; }
     .analyse-resume { background: white; border: 1px solid #c0b8a0; border-radius: 6px; padding: 12px; }
     .filtre-periode { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
     .filtre-periode select { padding: 6px; border: 1px solid #ccc; border-radius: 4px; }
@@ -71,11 +77,17 @@
     .toast-error { background: #b00020; }
     .toast-info { background: #2c3e50; }
     @keyframes fadein { from { opacity: 0; transform: translateY(20px); } to { opacity: 0.95; transform: translateY(0); } }
-    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+    .bar-chart { margin-bottom: 12px; }
+    .bar-row { display: flex; align-items: center; margin-bottom: 4px; }
+    .bar-label { width: 90px; font-size: 0.75rem; text-align: right; margin-right: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .bar-container { flex: 1; height: 18px; background: #eee; border-radius: 3px; position: relative; }
+    .bar-fill { height: 100%; background: #1e5d3f; border-radius: 3px; }
+    .bar-value { font-size: 0.7rem; margin-left: 4px; width: 60px; }
     @media (max-width: 600px) {
       .table-wrapper { border: none; }
       table { min-width: auto; width: 100%; }
       th, td { font-size: 0.7rem; padding: 4px 1px; }
+      .bar-label { width: 70px; }
     }
   </style>
 </head>
@@ -90,7 +102,7 @@
   <input type="text" class="search-box" id="search-input" placeholder="🔍 Rechercher (tous les mois)..." aria-label="Rechercher une opération">
   <div class="onglets" role="tablist">
     <div class="onglet actif" data-onglet="livre" role="tab" aria-selected="true" tabindex="0">📖 Livre</div>
-    <div class="onglet" data-onglet="gabarits" role="tab" aria-selected="false" tabindex="0">🗓️ Gabarits</div>
+    <div class="onglet" data-onglet="recurrences" role="tab" aria-selected="false" tabindex="0">🗓️ Récurrences</div>
     <div class="onglet" data-onglet="analyse" role="tab" aria-selected="false" tabindex="0">📊 Analyse</div>
   </div>
 
@@ -122,16 +134,10 @@
       <table id="table-operations">
         <thead>
           <tr>
-            <th>Date</th>
-            <th>Opération</th>
-            <th>Catégorie</th>
-            <th>Mode</th>
-            <th class="text-right">Débit</th>
-            <th class="text-right">Crédit</th>
-            <th class="text-right">Solde</th>
-            <th class="text-center">Pointé</th>
-            <th class="text-center">Mod.</th>
-            <th class="text-center">Suppr.</th>
+            <th>Date</th><th>Opération</th><th>Catégorie</th><th>Mode</th>
+            <th class="text-right">Débit</th><th class="text-right">Crédit</th>
+            <th class="text-right">Solde</th><th class="text-center">Pointé</th>
+            <th class="text-center">Mod.</th><th class="text-center">Suppr.</th>
           </tr>
         </thead>
         <tbody id="corps-table"></tbody>
@@ -142,32 +148,43 @@
     <button class="btn-supprimer-tout" id="btn-supprimer-tout" aria-label="Supprimer toutes les opérations du mois">🗑️ Tout supprimer ce mois</button>
   </div>
 
-  <!-- onglet Gabarits -->
-  <div class="contenu-onglet" id="gabarits" role="tabpanel">
+  <!-- onglet Récurrences -->
+  <div class="contenu-onglet" id="recurrences" role="tabpanel">
     <h2>Charges fixes / Revenus récurrents</h2>
-    <div class="gabarit-form">
+    <div class="recurrence-form" id="recurrence-form">
+      <input type="hidden" id="recurrence-editing-id" value="">
       <label>Type</label>
-      <select id="gabarit-type"><option value="depense">Dépense</option><option value="revenu">Revenu</option></select>
+      <select id="recurrence-type"><option value="depense">Dépense</option><option value="revenu">Revenu</option></select>
       <label>Libellé</label>
-      <input type="text" id="gabarit-libelle" placeholder="Ex: Loyer">
+      <input type="text" id="recurrence-libelle" placeholder="Ex: Loyer">
       <label>Catégorie</label>
-      <input list="gabarit-categories-list" id="gabarit-categorie" placeholder="Ex: Logement">
-      <datalist id="gabarit-categories-list">
-        <option>Alimentation</option><option>Logement</option><option>Transport</option><option>Loisirs</option><option>Salaire</option><option>Autres revenus</option>
-      </datalist>
+      <input list="recurrence-categories-list" id="recurrence-categorie" placeholder="Ex: Logement">
+      <datalist id="recurrence-categories-list"></datalist>
       <label>Mode</label>
-      <input list="gabarit-modes-list" id="gabarit-mode" placeholder="Ex: Prélèvement">
-      <datalist id="gabarit-modes-list">
-        <option>Prélèvement</option><option>Virement</option><option>CB</option><option>Chèque</option>
-      </datalist>
+      <input list="recurrence-modes-list" id="recurrence-mode" placeholder="Ex: Prélèvement">
+      <datalist id="recurrence-modes-list"></datalist>
       <label>Montant</label>
-      <input type="number" id="gabarit-montant" step="0.01" min="0.01">
+      <input type="number" id="recurrence-montant" step="0.01" min="0.01">
       <label>Jour du mois</label>
-      <input type="number" id="gabarit-jour" min="1" max="31" value="1">
-      <button class="btn-save" id="btn-ajout-gabarit">Ajouter ce gabarit</button>
+      <input type="number" id="recurrence-jour" min="1" max="31" value="1">
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <div style="flex:1;">
+          <label>Début (mois, optionnel)</label>
+          <input type="month" id="recurrence-debut">
+        </div>
+        <div style="flex:1;">
+          <label>Fin (mois, optionnel)</label>
+          <input type="month" id="recurrence-fin">
+        </div>
+      </div>
+      <label><input type="checkbox" id="recurrence-auto"> Génération automatique au changement de mois</label>
+      <div class="btn-group" style="margin-top:12px;">
+        <button class="btn-cancel" id="btn-recurrence-cancel">Annuler</button>
+        <button class="btn-save" id="btn-recurrence-save">Ajouter cette récurrence</button>
+      </div>
     </div>
-    <h3>Gabarits existants</h3>
-    <ul class="liste-gabarits" id="liste-gabarits"></ul>
+    <h3>Récurrences existantes</h3>
+    <ul class="liste-recurrences" id="liste-recurrences"></ul>
   </div>
 
   <!-- onglet Analyse -->
@@ -182,7 +199,9 @@
       </select>
       <button id="btn-actualiser-analyse">Actualiser</button>
     </div>
-    <div class="analyse-resume" id="analyse-resultat"></div>
+    <div class="analyse-resume" id="analyse-resultat">
+      <!-- Le graphique et le tableau seront générés ici -->
+    </div>
   </div>
 
   <!-- Modale ajout -->
@@ -221,7 +240,7 @@
       <input list="modes-list-modif" id="modif-mode" placeholder="Ex: CB">
       <datalist id="modes-list-modif"></datalist>
       <label>Montant</label><input type="number" id="modif-montant" step="0.01" min="0.01">
-      <label><input type="checkbox" id="modif-dissocier"> Dissocier du gabarit (opération ponctuelle)</label>
+      <label><input type="checkbox" id="modif-dissocier"> Dissocier de la récurrence (opération ponctuelle)</label>
       <div class="btn-group">
         <button class="btn-cancel" id="btn-modif-cancel">Annuler</button>
         <button class="btn-save" id="btn-modif-save">Enregistrer</button>
@@ -229,23 +248,21 @@
     </div>
   </div>
 
-  <!-- Tutoriel -->
   <div class="tutorial-overlay" id="tutorial-overlay">
     <div class="tutorial-box">
       <h2>💰 Bienvenue !</h2>
-      <p>1. Gabarits → charges fixes<br>2. Livre → générer le mois<br>3. Pointer avec le relevé</p>
+      <p>1. Récurrences → charges fixes<br>2. Livre → générer le mois<br>3. Pointer avec le relevé</p>
       <button id="tutorial-ok">Commencer</button>
     </div>
   </div>
 
-  <!-- Conteneur de toasts -->
   <div class="toast-container" id="toast-container"></div>
 </div>
 
 <script>
   (function() {
     // ---------- Base de données ----------
-    const DB_NAME = 'suivi-bancaire-v2', DB_VERSION = 1;
+    const DB_NAME = 'suivi-bancaire-v2', DB_VERSION = 2; // v2 pour les champs auto/dates
     let db;
 
     function openDB() {
@@ -253,6 +270,7 @@
         const q = indexedDB.open(DB_NAME, DB_VERSION);
         q.onupgradeneeded = (e) => {
           const d = e.target.result;
+          // Les stores restent les mêmes, on ne change que les données (pas de migration)
           if (!d.objectStoreNames.contains('operations')) d.createObjectStore('operations', { keyPath: 'id' });
           if (!d.objectStoreNames.contains('gabarits')) d.createObjectStore('gabarits', { keyPath: 'id' });
           if (!d.objectStoreNames.contains('soldesInitiaux')) d.createObjectStore('soldesInitiaux', { keyPath: 'mois' });
@@ -315,12 +333,10 @@
     let anneeActuelle = new Date().getFullYear();
     let searchTerm = '';
     let soldeInitialCourant = 0;
+    let editingRecurrenceId = null; // pour le formulaire de récurrence
 
     async function chargerDonnees() {
-      [operations, gabarits] = await Promise.all([
-        readAll('operations'),
-        readAll('gabarits')
-      ]);
+      [operations, gabarits] = await Promise.all([ readAll('operations'), readAll('gabarits') ]);
       prochainIdOp = operations.reduce((m, op) => Math.max(m, op.id), 0) + 1;
       prochainIdGab = gabarits.reduce((m, g) => Math.max(m, g.id), 0) + 1;
       const moisStr = `${anneeActuelle}-${String(moisActuel+1).padStart(2,'0')}`;
@@ -343,7 +359,14 @@
       await deleteRecord('operations', op.id);
     }
 
-    async function genererOperationsPourMois(mois, annee) {
+    function estDansPlageDate(gabarit, moisStr) {
+      // moisStr format "YYYY-MM"
+      if (gabarit.dateDebut && gabarit.dateDebut > moisStr) return false;
+      if (gabarit.dateFin && gabarit.dateFin < moisStr) return false;
+      return true;
+    }
+
+    async function genererOperationsPourMois(mois, annee, seulementAuto) {
       const moisStr = `${annee}-${String(mois+1).padStart(2,'0')}`;
       const existantes = operations.filter(op => op.moisGeneration === moisStr && op.gabaritId);
       const idsExistants = new Set(existantes.map(op => op.gabaritId));
@@ -351,7 +374,10 @@
       const supprSet = new Set(suppressionsList.map(s => s.cle));
       let ajoutees = 0;
       for (const gab of gabarits) {
+        // Filtre auto si demandé
+        if (seulementAuto && !gab.auto) continue;
         if (idsExistants.has(gab.id)) continue;
+        if (!estDansPlageDate(gab, moisStr)) continue;
         const cleSuppr = `gabarit_${gab.id}_${moisStr}`;
         if (supprSet.has(cleSuppr)) continue;
         const dernierJour = new Date(annee, mois+1, 0).getDate();
@@ -407,25 +433,32 @@
       const { soldePointe, soldeDisponible, opsTriees, SI } = calculerSoldesAffiches();
       const corps = document.getElementById('corps-table');
       corps.innerHTML = '';
+
       if (opsMoisFiltrees.length === 0) {
         corps.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:20px;">Aucune opération</td></tr>';
       } else {
-        const sorted = [...opsMoisFiltrees].sort((a, b) => new Date(a.date) - new Date(b.date));
+        // Séparation récurrentes / ponctuelles pour le groupage visuel
+        const recurrentesFiltrees = opsMoisFiltrees.filter(op => op.gabaritId).sort((a,b) => new Date(a.date) - new Date(b.date));
+        const ponctuellesFiltrees = opsMoisFiltrees.filter(op => !op.gabaritId).sort((a,b) => new Date(a.date) - new Date(b.date));
+        const sorted = [...recurrentesFiltrees, ...ponctuellesFiltrees];
+
         let cumulProgressif = SI;
         for (const op of opsTriees) {
           const montant = op.type === 'revenu' ? op.montant : -op.montant;
           cumulProgressif += montant;
           if (!sorted.includes(op)) continue;
+
           const estRecurrente = !!op.gabaritId;
           const tr = document.createElement('tr');
+          if (estRecurrente) tr.classList.add('recurrente');
+
+          // Gestion des bordures du bloc récurrent
+          const idxDansRecurrentes = recurrentesFiltrees.indexOf(op);
           if (estRecurrente) {
-            tr.classList.add('recurrente');
-            const i = sorted.indexOf(op);
-            const prev = i > 0 ? sorted[i-1] : null;
-            const next = i < sorted.length-1 ? sorted[i+1] : null;
-            if (!prev || !prev.gabaritId) tr.classList.add('recurrente-first');
-            if (!next || !next.gabaritId) tr.classList.add('recurrente-last');
+            if (idxDansRecurrentes === 0) tr.classList.add('recurrente-first');
+            if (idxDansRecurrentes === recurrentesFiltrees.length - 1) tr.classList.add('recurrente-last');
           }
+
           tr.innerHTML = `
             <td>${new Date(op.date).toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'})}</td>
             <td><strong>${op.libelle}</strong>${estRecurrente ? ' 🔁' : ''}</td>
@@ -441,38 +474,34 @@
           corps.appendChild(tr);
         }
       }
+
       document.getElementById('solde-pointe').textContent = `${soldePointe.toFixed(2)} €`;
       document.getElementById('solde-disponible').textContent = `${soldeDisponible.toFixed(2)} €`;
       document.getElementById('solde-pointe').className = 'solde-value ' + (soldePointe >= 0 ? 'positif' : 'negatif');
       document.getElementById('solde-disponible').className = 'solde-value ' + (soldeDisponible >= 0 ? 'positif' : 'negatif');
       document.getElementById('mois-courant-livre').textContent = new Date(anneeActuelle, moisActuel).toLocaleDateString('fr-FR', {month:'long', year:'numeric'});
 
+      // Événements
       document.querySelectorAll('.pointe-checkbox').forEach(cb => {
         cb.addEventListener('change', async function() {
           const id = parseInt(this.dataset.id);
           const op = operations.find(o => o.id === id);
-          if (op) {
-            op.pointe = this.checked;
-            await writeRecord('operations', op);
-            afficherTout();
-          }
+          if (op) { op.pointe = this.checked; await writeRecord('operations', op); afficherTout(); }
         });
       });
-
       document.querySelectorAll('.btn-supprimer-op').forEach(btn => {
         btn.addEventListener('click', async function(e) {
           e.stopPropagation();
           const id = parseInt(this.dataset.id);
           const op = operations.find(o => o.id === id);
           if (!op) return;
-          if (!confirm(op.pointe ? '⚠️ Cette opération est pointée. La supprimer peut désynchroniser le rapprochement. Continuer ?' : 'Supprimer cette opération ?')) return;
+          if (!confirm(op.pointe ? '⚠️ Opération pointée. La supprimer peut désynchroniser le rapprochement. Continuer ?' : 'Supprimer cette opération ?')) return;
           await supprimerOperation(op);
           operations = operations.filter(o => o.id !== id);
           afficherTout();
           showToast('Opération supprimée.', 'info');
         });
       });
-
       document.querySelectorAll('.btn-modifier-op').forEach(btn => {
         btn.addEventListener('click', function(e) {
           e.stopPropagation();
@@ -499,6 +528,7 @@
       afficherLivre();
     }
 
+    // Listes personnalisées
     function getListePersonnalisee(champ) {
       const ensemble = new Set();
       operations.forEach(op => ensemble.add(op[champ]));
@@ -510,11 +540,7 @@
       const dl = document.getElementById(datalistId);
       if (!dl) return;
       dl.innerHTML = '';
-      options.forEach(opt => {
-        const o = document.createElement('option');
-        o.value = opt;
-        dl.appendChild(o);
-      });
+      options.forEach(opt => { const o = document.createElement('option'); o.value = opt; dl.appendChild(o); });
     }
 
     function mettreAJourDatalistsModale() {
@@ -531,7 +557,157 @@
       setTimeout(() => toast.remove(), 3000);
     }
 
-    // ---------- Événements ----------
+    // Récurrences : affichage et formulaire
+    function afficherRecurrences() {
+      const l = document.getElementById('liste-recurrences');
+      l.innerHTML = '';
+      [...gabarits].sort((a, b) => a.jour - b.jour).forEach(g => {
+        const li = document.createElement('li');
+        li.className = 'recurrence-item';
+        let info = `<strong>${g.libelle}</strong> - ${g.montant.toFixed(2)} € le ${g.jour}`;
+        if (g.dateDebut || g.dateFin) {
+          info += ` (du ${g.dateDebut || '…'} au ${g.dateFin || '…'})`;
+        }
+        if (g.auto) info += ' 🔄 auto';
+        li.innerHTML = `<div>${info}</div>
+          <div class="recurrence-actions">
+            <button class="btn-modifier-recurrence" data-id="${g.id}" aria-label="Modifier la récurrence">✏️</button>
+            <button class="btn-supprimer" data-id="${g.id}" aria-label="Supprimer la récurrence">✕</button>
+          </div>`;
+        l.appendChild(li);
+      });
+
+      document.querySelectorAll('#liste-recurrences .btn-supprimer').forEach(b => {
+        b.addEventListener('click', async function() {
+          const id = parseInt(this.dataset.id);
+          await deleteRecord('gabarits', id);
+          gabarits = gabarits.filter(g => g.id !== id);
+          if (editingRecurrenceId === id) resetRecurrenceForm();
+          afficherRecurrences();
+          showToast('Récurrence supprimée.', 'info');
+        });
+      });
+
+      document.querySelectorAll('#liste-recurrences .btn-modifier-recurrence').forEach(b => {
+        b.addEventListener('click', function() {
+          const id = parseInt(this.dataset.id);
+          const g = gabarits.find(g => g.id === id);
+          if (!g) return;
+          remplirFormRecurrence(g);
+          editingRecurrenceId = id;
+          document.getElementById('recurrence-editing-id').value = id;
+          document.getElementById('btn-recurrence-save').textContent = 'Modifier cette récurrence';
+          document.getElementById('btn-recurrence-cancel').style.display = 'inline-block';
+        });
+      });
+    }
+
+    function remplirFormRecurrence(g) {
+      document.getElementById('recurrence-type').value = g.type;
+      document.getElementById('recurrence-libelle').value = g.libelle;
+      document.getElementById('recurrence-categorie').value = g.categorie;
+      document.getElementById('recurrence-mode').value = g.mode;
+      document.getElementById('recurrence-montant').value = g.montant;
+      document.getElementById('recurrence-jour').value = g.jour;
+      document.getElementById('recurrence-debut').value = g.dateDebut || '';
+      document.getElementById('recurrence-fin').value = g.dateFin || '';
+      document.getElementById('recurrence-auto').checked = g.auto || false;
+    }
+
+    function resetRecurrenceForm() {
+      editingRecurrenceId = null;
+      document.getElementById('recurrence-editing-id').value = '';
+      document.getElementById('recurrence-libelle').value = '';
+      document.getElementById('recurrence-categorie').value = '';
+      document.getElementById('recurrence-mode').value = '';
+      document.getElementById('recurrence-montant').value = '';
+      document.getElementById('recurrence-jour').value = '1';
+      document.getElementById('recurrence-debut').value = '';
+      document.getElementById('recurrence-fin').value = '';
+      document.getElementById('recurrence-auto').checked = false;
+      document.getElementById('btn-recurrence-save').textContent = 'Ajouter cette récurrence';
+      document.getElementById('btn-recurrence-cancel').style.display = 'none';
+    }
+
+    document.getElementById('btn-recurrence-save').addEventListener('click', async () => {
+      const type = document.getElementById('recurrence-type').value;
+      const libelle = document.getElementById('recurrence-libelle').value.trim();
+      const categorie = document.getElementById('recurrence-categorie').value.trim();
+      const mode = document.getElementById('recurrence-mode').value.trim();
+      const montant = parseFloat(document.getElementById('recurrence-montant').value);
+      const jour = parseInt(document.getElementById('recurrence-jour').value, 10);
+      const debut = document.getElementById('recurrence-debut').value; // '' ou "YYYY-MM"
+      const fin = document.getElementById('recurrence-fin').value;
+      const auto = document.getElementById('recurrence-auto').checked;
+      if (!libelle || !categorie || !mode || isNaN(montant) || montant <= 0 || jour < 1 || jour > 31) {
+        alert('Champs invalides'); return;
+      }
+
+      if (editingRecurrenceId) {
+        const g = gabarits.find(g => g.id === editingRecurrenceId);
+        if (g) {
+          g.type = type; g.libelle = libelle; g.categorie = categorie; g.mode = mode;
+          g.montant = montant; g.jour = jour; g.dateDebut = debut || null; g.dateFin = fin || null; g.auto = auto;
+          await writeRecord('gabarits', g);
+          showToast('Récurrence modifiée.', 'success');
+        }
+      } else {
+        const newG = {
+          id: prochainIdGab++,
+          type, libelle, categorie, mode, montant, jour,
+          dateDebut: debut || null, dateFin: fin || null, auto
+        };
+        gabarits.push(newG);
+        await writeRecord('gabarits', newG);
+        showToast('Récurrence ajoutée.', 'success');
+      }
+
+      resetRecurrenceForm();
+      afficherRecurrences();
+      // Ne pas générer automatiquement ici (l'utilisateur le fera via le bouton)
+    });
+
+    document.getElementById('btn-recurrence-cancel').addEventListener('click', () => {
+      resetRecurrenceForm();
+      afficherRecurrences();
+    });
+    document.getElementById('btn-recurrence-cancel').style.display = 'none';
+
+    // Navigation mois
+    document.getElementById('mois-precedent').addEventListener('click', async function() {
+      this.disabled = true;
+      try {
+        moisActuel--; if (moisActuel < 0) { moisActuel = 11; anneeActuelle--; }
+        const moisStr = `${anneeActuelle}-${String(moisActuel+1).padStart(2,'0')}`;
+        const soldesInitiaux = await readAll('soldesInitiaux');
+        const entry = soldesInitiaux.find(s => s.mois === moisStr);
+        soldeInitialCourant = entry ? entry.valeur : 0;
+        document.getElementById('solde-initial-input').value = soldeInitialCourant;
+        await genererOperationsPourMois(moisActuel, anneeActuelle, true); // auto seulement
+        afficherTout();
+      } finally { this.disabled = false; }
+    });
+
+    document.getElementById('mois-suivant').addEventListener('click', async function() {
+      this.disabled = true;
+      try {
+        moisActuel++; if (moisActuel > 11) { moisActuel = 0; anneeActuelle++; }
+        const moisStr = `${anneeActuelle}-${String(moisActuel+1).padStart(2,'0')}`;
+        const soldesInitiaux = await readAll('soldesInitiaux');
+        const entry = soldesInitiaux.find(s => s.mois === moisStr);
+        soldeInitialCourant = entry ? entry.valeur : 0;
+        document.getElementById('solde-initial-input').value = soldeInitialCourant;
+        await genererOperationsPourMois(moisActuel, anneeActuelle, true);
+        afficherTout();
+      } finally { this.disabled = false; }
+    });
+
+    document.getElementById('btn-generer').addEventListener('click', async () => {
+      const nb = await genererOperationsPourMois(moisActuel, anneeActuelle, false); // toutes
+      afficherTout();
+      showToast(nb > 0 ? `${nb} opération(s) générée(s).` : 'Aucune nouvelle opération à générer.', 'success');
+    });
+
     document.getElementById('btn-set-solde-initial').addEventListener('click', async () => {
       const val = parseFloat(document.getElementById('solde-initial-input').value);
       if (isNaN(val)) return;
@@ -553,10 +729,7 @@
       op.mode = document.getElementById('modif-mode').value.trim();
       op.montant = parseFloat(document.getElementById('modif-montant').value);
       if (!op.libelle || isNaN(op.montant) || op.montant <= 0) { alert('Champs invalides'); return; }
-      if (dissocier) {
-        op.gabaritId = null;
-        op.moisGeneration = null;
-      }
+      if (dissocier) { op.gabaritId = null; op.moisGeneration = null; }
       await writeRecord('operations', op);
       document.getElementById('modal-modifier-overlay').classList.remove('active');
       afficherTout();
@@ -570,50 +743,12 @@
       const ops = filtrerParMois(moisActuel, anneeActuelle);
       if (!ops.length) return;
       const pointées = ops.filter(o => o.pointe);
-      const msg = pointées.length > 0 ? `⚠️ ${pointées.length} opération(s) pointée(s) incluse(s). Supprimer toutes les ${ops.length} opérations du mois ?` : `Supprimer les ${ops.length} opérations du mois ?`;
+      const msg = pointées.length > 0 ? `⚠️ ${pointées.length} opération(s) pointée(s). Supprimer toutes les ${ops.length} opérations du mois ?` : `Supprimer les ${ops.length} opérations du mois ?`;
       if (!confirm(msg)) return;
-      for (const op of ops) {
-        await supprimerOperation(op);
-      }
+      for (const op of ops) await supprimerOperation(op);
       operations = operations.filter(o => !ops.includes(o));
       afficherTout();
       showToast('Opérations du mois supprimées.', 'info');
-    });
-
-    document.getElementById('mois-precedent').addEventListener('click', async function() {
-      this.disabled = true;
-      try {
-        moisActuel--;
-        if (moisActuel < 0) { moisActuel = 11; anneeActuelle--; }
-        const moisStr = `${anneeActuelle}-${String(moisActuel+1).padStart(2,'0')}`;
-        const soldesInitiaux = await readAll('soldesInitiaux');
-        const entry = soldesInitiaux.find(s => s.mois === moisStr);
-        soldeInitialCourant = entry ? entry.valeur : 0;
-        document.getElementById('solde-initial-input').value = soldeInitialCourant;
-        await genererOperationsPourMois(moisActuel, anneeActuelle);
-        afficherTout();
-      } finally { this.disabled = false; }
-    });
-
-    document.getElementById('mois-suivant').addEventListener('click', async function() {
-      this.disabled = true;
-      try {
-        moisActuel++;
-        if (moisActuel > 11) { moisActuel = 0; anneeActuelle++; }
-        const moisStr = `${anneeActuelle}-${String(moisActuel+1).padStart(2,'0')}`;
-        const soldesInitiaux = await readAll('soldesInitiaux');
-        const entry = soldesInitiaux.find(s => s.mois === moisStr);
-        soldeInitialCourant = entry ? entry.valeur : 0;
-        document.getElementById('solde-initial-input').value = soldeInitialCourant;
-        await genererOperationsPourMois(moisActuel, anneeActuelle);
-        afficherTout();
-      } finally { this.disabled = false; }
-    });
-
-    document.getElementById('btn-generer').addEventListener('click', async () => {
-      const nb = await genererOperationsPourMois(moisActuel, anneeActuelle);
-      afficherTout();
-      showToast(nb > 0 ? `${nb} opération(s) générée(s).` : 'Aucune nouvelle opération à générer.', 'success');
     });
 
     document.getElementById('search-input').addEventListener('input', function() {
@@ -621,47 +756,7 @@
       afficherLivre();
     });
 
-    function afficherGabarits() {
-      const l = document.getElementById('liste-gabarits');
-      l.innerHTML = '';
-      [...gabarits].sort((a, b) => a.jour - b.jour).forEach(g => {
-        const li = document.createElement('li');
-        li.className = 'gabarit-item';
-        li.innerHTML = `<div><strong>${g.libelle}</strong> - ${g.montant.toFixed(2)} € le ${g.jour}</div><button class="btn-supprimer" data-id="${g.id}" aria-label="Supprimer le gabarit">✕</button>`;
-        l.appendChild(li);
-      });
-      document.querySelectorAll('.btn-supprimer').forEach(b => {
-        b.addEventListener('click', async function() {
-          const id = parseInt(this.dataset.id);
-          await deleteRecord('gabarits', id);
-          gabarits = gabarits.filter(g => g.id !== id);
-          afficherGabarits();
-          showToast('Gabarit supprimé.', 'info');
-        });
-      });
-    }
-
-    document.getElementById('btn-ajout-gabarit').addEventListener('click', async () => {
-      const t = document.getElementById('gabarit-type').value;
-      const l = document.getElementById('gabarit-libelle').value.trim();
-      const c = document.getElementById('gabarit-categorie').value.trim();
-      const m = document.getElementById('gabarit-mode').value.trim();
-      const mt = parseFloat(document.getElementById('gabarit-montant').value);
-      const j = parseInt(document.getElementById('gabarit-jour').value, 10);
-      if (!l || !c || !m || isNaN(mt) || mt <= 0 || j < 1 || j > 31) { alert('Champs invalides'); return; }
-      const g = { id: prochainIdGab++, type: t, libelle: l, categorie: c, mode: m, montant: mt, jour: j };
-      gabarits.push(g);
-      await writeRecord('gabarits', g);
-      document.getElementById('gabarit-libelle').value = '';
-      document.getElementById('gabarit-categorie').value = '';
-      document.getElementById('gabarit-mode').value = '';
-      document.getElementById('gabarit-montant').value = '';
-      afficherGabarits();
-      const nb = await genererOperationsPourMois(moisActuel, anneeActuelle);
-      afficherTout();
-      showToast(`Gabarit ajouté. ${nb > 0 ? nb + ' opération(s) générée(s) pour le mois.' : ''}`, 'success');
-    });
-
+    // Analyse avec graphique en barres
     async function actualiserAnalyse() {
       const tp = document.getElementById('analyse-periode-type').value;
       let debut, fin;
@@ -683,30 +778,56 @@
       const cats = {};
       depenses.forEach(o => { cats[o.categorie] = (cats[o.categorie] || 0) + o.montant; });
       const total = Object.values(cats).reduce((s, v) => s + v, 0);
-      let html = '<table style="width:100%;border-collapse:collapse;"><tr style="border-bottom:2px solid #b0a58c;"><th style="text-align:left;padding:6px;">Catégorie</th><th style="text-align:right;padding:6px;">Total</th><th style="text-align:right;padding:6px;">%</th></tr>';
-      if (!total) html += '<tr><td colspan="3" style="text-align:center;padding:10px;">Aucune dépense</td></tr>';
-      else Object.entries(cats).sort((a,b) => b[1]-a[1]).forEach(([c, t]) => {
-        html += `<tr style="border-bottom:1px solid #ddd;"><td style="padding:6px;">${c}</td><td style="text-align:right;padding:6px;">${t.toFixed(2)} €</td><td style="text-align:right;padding:6px;">${(t/total*100).toFixed(1)}%</td></tr>`;
-      });
-      html += '</table>';
-      document.getElementById('analyse-resultat').innerHTML = html;
+      const resultat = document.getElementById('analyse-resultat');
+      let html = '';
+
+      if (!total) {
+        html += '<p style="text-align:center;padding:10px;">Aucune dépense sur la période</p>';
+      } else {
+        // Graphique en barres horizontales
+        html += '<div class="bar-chart">';
+        Object.entries(cats).sort((a,b) => b[1] - a[1]).forEach(([cat, val]) => {
+          const pourcent = (val/total*100).toFixed(1);
+          html += `<div class="bar-row">
+            <div class="bar-label" title="${cat}">${cat}</div>
+            <div class="bar-container"><div class="bar-fill" style="width:${pourcent}%;"></div></div>
+            <div class="bar-value">${val.toFixed(2)} € (${pourcent}%)</div>
+          </div>`;
+        });
+        html += '</div>';
+
+        // Tableau détaillé
+        html += '<table style="width:100%;border-collapse:collapse;margin-top:8px;">';
+        html += '<tr style="border-bottom:2px solid #b0a58c;"><th style="text-align:left;padding:6px;">Catégorie</th><th style="text-align:right;padding:6px;">Total</th><th style="text-align:right;padding:6px;">%</th></tr>';
+        Object.entries(cats).sort((a,b) => b[1] - a[1]).forEach(([cat, val]) => {
+          html += `<tr style="border-bottom:1px solid #ddd;">
+            <td style="padding:6px;">${cat}</td>
+            <td style="text-align:right;padding:6px;">${val.toFixed(2)} €</td>
+            <td style="text-align:right;padding:6px;">${(val/total*100).toFixed(1)}%</td>
+          </tr>`;
+        });
+        html += '</table>';
+      }
+      resultat.innerHTML = html;
     }
     document.getElementById('btn-actualiser-analyse').addEventListener('click', actualiserAnalyse);
 
+    // Changement d'onglet
     document.querySelectorAll('.onglet').forEach(o => {
       o.addEventListener('click', function() {
         const n = this.dataset.onglet;
         document.querySelectorAll('.onglet').forEach(x => { x.classList.remove('actif'); x.setAttribute('aria-selected', 'false'); });
-        this.classList.add('actif');
-        this.setAttribute('aria-selected', 'true');
+        this.classList.add('actif'); this.setAttribute('aria-selected', 'true');
         document.querySelectorAll('.contenu-onglet').forEach(x => x.classList.remove('actif'));
-        document.getElementById(n).classList.add('actif');
-        if (n === 'gabarits') afficherGabarits();
+        const panel = document.getElementById(n);
+        if (panel) panel.classList.add('actif');
+        if (n === 'recurrences') afficherRecurrences();
         if (n === 'livre') afficherTout();
         if (n === 'analyse') actualiserAnalyse();
       });
     });
 
+    // Modale ajout
     const mo = document.getElementById('modal-overlay');
     document.getElementById('btn-ajout').addEventListener('click', () => {
       document.getElementById('form-date').value = new Date().toISOString().slice(0,10);
@@ -750,68 +871,62 @@
       }
     });
 
+    // Export CSV
     document.getElementById('export-btn').addEventListener('click', () => {
       let csv = 'Date;Opération;Type;Catégorie;Mode;Montant;Pointé\n';
-      operations.forEach(o => {
-        csv += `${o.date};${o.libelle};${o.type};${o.categorie};${o.mode};${o.montant};${o.pointe?'Oui':'Non'}\n`;
-      });
+      operations.forEach(o => { csv += `${o.date};${o.libelle};${o.type};${o.categorie};${o.mode};${o.montant};${o.pointe?'Oui':'Non'}\n`; });
       const blob = new Blob([csv], {type: 'text/csv'});
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'suivi.csv';
-      a.click();
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'suivi.csv'; a.click();
       showToast('Export CSV effectué.', 'info');
     });
 
+    // Sauvegarde / Restauration JSON
     document.getElementById('save-btn').addEventListener('click', async () => {
       const soldesInitiaux = await readAll('soldesInitiaux');
       const suppressions = await readAll('suppressions');
       const meta = await readAll('meta');
       const d = { operations, gabarits, soldesInitiaux, suppressions, meta, prochainIdOp, prochainIdGab };
       const blob = new Blob([JSON.stringify(d)], {type: 'application/json'});
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'sauvegarde.json';
-      a.click();
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'sauvegarde.json'; a.click();
       showToast('Sauvegarde effectuée.', 'success');
     });
 
     document.getElementById('restore-btn').addEventListener('click', () => {
-      const i = document.createElement('input');
-      i.type = 'file';
-      i.accept = '.json';
-      i.addEventListener('change', async (e) => {
+      const input = document.createElement('input');
+      input.type = 'file'; input.accept = '.json';
+      input.addEventListener('change', async (e) => {
         try {
-          const f = e.target.files[0];
-          const t = await f.text();
-          const d = JSON.parse(t);
+          const file = e.target.files[0];
+          const text = await file.text();
+          const data = JSON.parse(text);
           await clearAllData();
-          operations = d.operations || [];
-          gabarits = d.gabarits || [];
-          prochainIdOp = d.prochainIdOp || 1;
-          prochainIdGab = d.prochainIdGab || 1;
+          operations = data.operations || [];
+          gabarits = data.gabarits || [];
+          prochainIdOp = data.prochainIdOp || 1;
+          prochainIdGab = data.prochainIdGab || 1;
           for (const op of operations) await writeRecord('operations', op);
           for (const g of gabarits) await writeRecord('gabarits', g);
-          for (const s of d.soldesInitiaux || []) await writeRecord('soldesInitiaux', s);
-          for (const s of d.suppressions || []) await writeRecord('suppressions', s);
-          for (const m of d.meta || []) await writeRecord('meta', m);
+          for (const s of data.soldesInitiaux || []) await writeRecord('soldesInitiaux', s);
+          for (const s of data.suppressions || []) await writeRecord('suppressions', s);
+          for (const m of data.meta || []) await writeRecord('meta', m);
           const moisStr = `${anneeActuelle}-${String(moisActuel+1).padStart(2,'0')}`;
           const soldesInitiaux = await readAll('soldesInitiaux');
           const entry = soldesInitiaux.find(s => s.mois === moisStr);
           soldeInitialCourant = entry ? entry.valeur : 0;
           document.getElementById('solde-initial-input').value = soldeInitialCourant;
-          await genererOperationsPourMois(moisActuel, anneeActuelle);
+          await genererOperationsPourMois(moisActuel, anneeActuelle, true);
           trierOperations();
           afficherTout();
-          afficherGabarits();
+          afficherRecurrences();
           showToast('Données restaurées avec succès.', 'success');
         } catch (err) {
           showToast('Fichier invalide.', 'error');
         }
       });
-      i.click();
+      input.click();
     });
 
+    // Tutoriel
     if (!localStorage.getItem('tuto-v2')) {
       document.getElementById('tutorial-overlay').classList.add('active');
       document.getElementById('tutorial-ok').addEventListener('click', () => {
@@ -825,10 +940,10 @@
       try {
         await openDB();
         await chargerDonnees();
-        await genererOperationsPourMois(moisActuel, anneeActuelle);
+        await genererOperationsPourMois(moisActuel, anneeActuelle, true);
         trierOperations();
         afficherTout();
-        afficherGabarits();
+        afficherRecurrences();
       } catch (err) {
         showToast('Erreur de chargement de la base de données.', 'error');
         console.error(err);
@@ -840,28 +955,13 @@
 <!-- Service Worker -->
 <script>
   if ('serviceWorker' in navigator) {
-    // Nettoyer les anciens SW pour éviter les bugs
     navigator.serviceWorker.getRegistrations().then(registrations => {
-      for (const registration of registrations) {
-        registration.unregister();
-      }
+      for (const reg of registrations) reg.unregister();
     }).then(() => {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js', { scope: './' })
-          .then(registration => {
-            console.log('[SW] Enregistré avec succès, scope:', registration.scope);
-            registration.onupdatefound = () => {
-              const installingWorker = registration.installing;
-              installingWorker.onstatechange = () => {
-                if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  console.log('[SW] Nouvelle version disponible, rechargez la page.');
-                }
-              };
-            };
-          })
-          .catch(err => {
-            console.error('[SW] Échec d\'enregistrement:', err);
-          });
+          .then(reg => console.log('[SW] Enregistré, scope:', reg.scope))
+          .catch(err => console.error('[SW] Échec:', err));
       });
     });
   }
