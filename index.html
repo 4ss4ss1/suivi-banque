@@ -37,12 +37,11 @@
     .credit { color: #1e5d3f; }
     .pointe-checkbox { width: 18px; height: 18px; cursor: pointer; accent-color: #1e5d3f; }
     .btn-supprimer-op, .btn-modifier-op { background: none; border: none; font-size: 1.1rem; cursor: pointer; padding: 2px 5px; line-height: 1; }
-    tr.recurrente { background: #f9f9f4; }
-    /* Les récurrentes sont regroupées en haut, on les encadre */
-    tr.recurrente-first td { border-top: 3px solid #222; }
-    tr.recurrente-last td { border-bottom: 3px solid #222; }
-    tr.recurrente td:first-child { border-left: 3px solid #222; }
-    tr.recurrente td:last-child { border-right: 3px solid #222; }
+    /* Lignes récurrentes : fond légèrement teinté + bordure gauche */
+    tr.recurrente {
+      background: #f3f7f0;
+      border-left: 3px solid #1e5d3f;
+    }
     .btn-ajout, .btn-generer, .btn-supprimer-tout { width: 100%; padding: 12px; font-size: 0.95rem; border: 1px solid #c0b8a0; background: #f3efe5; color: #333; border-radius: 4px; cursor: pointer; font-weight: 500; margin-top: 6px; }
     .btn-supprimer-tout { color: #b00020; border-color: #b00020; }
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 10; }
@@ -262,7 +261,7 @@
 <script>
   (function() {
     // ---------- Base de données ----------
-    const DB_NAME = 'suivi-bancaire-v2', DB_VERSION = 2; // v2 pour les champs auto/dates
+    const DB_NAME = 'suivi-bancaire-v2', DB_VERSION = 2;
     let db;
 
     function openDB() {
@@ -270,7 +269,6 @@
         const q = indexedDB.open(DB_NAME, DB_VERSION);
         q.onupgradeneeded = (e) => {
           const d = e.target.result;
-          // Les stores restent les mêmes, on ne change que les données (pas de migration)
           if (!d.objectStoreNames.contains('operations')) d.createObjectStore('operations', { keyPath: 'id' });
           if (!d.objectStoreNames.contains('gabarits')) d.createObjectStore('gabarits', { keyPath: 'id' });
           if (!d.objectStoreNames.contains('soldesInitiaux')) d.createObjectStore('soldesInitiaux', { keyPath: 'mois' });
@@ -333,7 +331,7 @@
     let anneeActuelle = new Date().getFullYear();
     let searchTerm = '';
     let soldeInitialCourant = 0;
-    let editingRecurrenceId = null; // pour le formulaire de récurrence
+    let editingRecurrenceId = null;
 
     async function chargerDonnees() {
       [operations, gabarits] = await Promise.all([ readAll('operations'), readAll('gabarits') ]);
@@ -360,7 +358,6 @@
     }
 
     function estDansPlageDate(gabarit, moisStr) {
-      // moisStr format "YYYY-MM"
       if (gabarit.dateDebut && gabarit.dateDebut > moisStr) return false;
       if (gabarit.dateFin && gabarit.dateFin < moisStr) return false;
       return true;
@@ -374,7 +371,6 @@
       const supprSet = new Set(suppressionsList.map(s => s.cle));
       let ajoutees = 0;
       for (const gab of gabarits) {
-        // Filtre auto si demandé
         if (seulementAuto && !gab.auto) continue;
         if (idsExistants.has(gab.id)) continue;
         if (!estDansPlageDate(gab, moisStr)) continue;
@@ -425,11 +421,16 @@
     }
 
     function afficherLivre() {
-      const opsMoisFiltrees = filtrerParMois(moisActuel, anneeActuelle).filter(op => {
+      const opsMois = filtrerParMois(moisActuel, anneeActuelle);
+      // Appliquer le filtre de recherche
+      const opsMoisFiltrees = opsMois.filter(op => {
         if (!searchTerm) return true;
         const t = searchTerm.toLowerCase();
         return op.libelle.toLowerCase().includes(t) || op.categorie.toLowerCase().includes(t) || op.mode.toLowerCase().includes(t);
       });
+      // Trier chronologiquement (les récurrentes restent à leur place)
+      opsMoisFiltrees.sort((a, b) => new Date(a.date) - new Date(b.date));
+
       const { soldePointe, soldeDisponible, opsTriees, SI } = calculerSoldesAffiches();
       const corps = document.getElementById('corps-table');
       corps.innerHTML = '';
@@ -437,31 +438,20 @@
       if (opsMoisFiltrees.length === 0) {
         corps.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:20px;">Aucune opération</td></tr>';
       } else {
-        // Séparation récurrentes / ponctuelles pour le groupage visuel
-        const recurrentesFiltrees = opsMoisFiltrees.filter(op => op.gabaritId).sort((a,b) => new Date(a.date) - new Date(b.date));
-        const ponctuellesFiltrees = opsMoisFiltrees.filter(op => !op.gabaritId).sort((a,b) => new Date(a.date) - new Date(b.date));
-        const sorted = [...recurrentesFiltrees, ...ponctuellesFiltrees];
-
         let cumulProgressif = SI;
+        // Parcourir toutes les opérations du mois (ordre chrono) pour calculer le solde correct
+        // et n'afficher que celles qui passent le filtre
         for (const op of opsTriees) {
           const montant = op.type === 'revenu' ? op.montant : -op.montant;
           cumulProgressif += montant;
-          if (!sorted.includes(op)) continue;
+          if (!opsMoisFiltrees.includes(op)) continue;
 
-          const estRecurrente = !!op.gabaritId;
           const tr = document.createElement('tr');
-          if (estRecurrente) tr.classList.add('recurrente');
-
-          // Gestion des bordures du bloc récurrent
-          const idxDansRecurrentes = recurrentesFiltrees.indexOf(op);
-          if (estRecurrente) {
-            if (idxDansRecurrentes === 0) tr.classList.add('recurrente-first');
-            if (idxDansRecurrentes === recurrentesFiltrees.length - 1) tr.classList.add('recurrente-last');
-          }
+          if (op.gabaritId) tr.classList.add('recurrente');
 
           tr.innerHTML = `
             <td>${new Date(op.date).toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'})}</td>
-            <td><strong>${op.libelle}</strong>${estRecurrente ? ' 🔁' : ''}</td>
+            <td><strong>${op.libelle}</strong>${op.gabaritId ? ' 🔁' : ''}</td>
             <td>${op.categorie}</td>
             <td>${op.mode}</td>
             <td class="text-right debit">${op.type === 'depense' ? op.montant.toFixed(2)+' €' : ''}</td>
@@ -528,7 +518,6 @@
       afficherLivre();
     }
 
-    // Listes personnalisées
     function getListePersonnalisee(champ) {
       const ensemble = new Set();
       operations.forEach(op => ensemble.add(op[champ]));
@@ -557,7 +546,7 @@
       setTimeout(() => toast.remove(), 3000);
     }
 
-    // Récurrences : affichage et formulaire
+    // ---------- Récurrences ----------
     function afficherRecurrences() {
       const l = document.getElementById('liste-recurrences');
       l.innerHTML = '';
@@ -636,13 +625,12 @@
       const mode = document.getElementById('recurrence-mode').value.trim();
       const montant = parseFloat(document.getElementById('recurrence-montant').value);
       const jour = parseInt(document.getElementById('recurrence-jour').value, 10);
-      const debut = document.getElementById('recurrence-debut').value; // '' ou "YYYY-MM"
+      const debut = document.getElementById('recurrence-debut').value;
       const fin = document.getElementById('recurrence-fin').value;
       const auto = document.getElementById('recurrence-auto').checked;
       if (!libelle || !categorie || !mode || isNaN(montant) || montant <= 0 || jour < 1 || jour > 31) {
         alert('Champs invalides'); return;
       }
-
       if (editingRecurrenceId) {
         const g = gabarits.find(g => g.id === editingRecurrenceId);
         if (g) {
@@ -661,10 +649,8 @@
         await writeRecord('gabarits', newG);
         showToast('Récurrence ajoutée.', 'success');
       }
-
       resetRecurrenceForm();
       afficherRecurrences();
-      // Ne pas générer automatiquement ici (l'utilisateur le fera via le bouton)
     });
 
     document.getElementById('btn-recurrence-cancel').addEventListener('click', () => {
@@ -673,7 +659,7 @@
     });
     document.getElementById('btn-recurrence-cancel').style.display = 'none';
 
-    // Navigation mois
+    // ---------- Navigation mois ----------
     document.getElementById('mois-precedent').addEventListener('click', async function() {
       this.disabled = true;
       try {
@@ -703,7 +689,7 @@
     });
 
     document.getElementById('btn-generer').addEventListener('click', async () => {
-      const nb = await genererOperationsPourMois(moisActuel, anneeActuelle, false); // toutes
+      const nb = await genererOperationsPourMois(moisActuel, anneeActuelle, false);
       afficherTout();
       showToast(nb > 0 ? `${nb} opération(s) générée(s).` : 'Aucune nouvelle opération à générer.', 'success');
     });
@@ -717,6 +703,7 @@
       showToast('Solde initial mis à jour.', 'success');
     });
 
+    // ---------- Modale modification ----------
     document.getElementById('btn-modif-save').addEventListener('click', async () => {
       const id = parseInt(document.getElementById('modif-id').value);
       const op = operations.find(o => o.id === id);
@@ -756,7 +743,7 @@
       afficherLivre();
     });
 
-    // Analyse avec graphique en barres
+    // ---------- Analyse ----------
     async function actualiserAnalyse() {
       const tp = document.getElementById('analyse-periode-type').value;
       let debut, fin;
@@ -795,7 +782,6 @@
           </div>`;
         });
         html += '</div>';
-
         // Tableau détaillé
         html += '<table style="width:100%;border-collapse:collapse;margin-top:8px;">';
         html += '<tr style="border-bottom:2px solid #b0a58c;"><th style="text-align:left;padding:6px;">Catégorie</th><th style="text-align:right;padding:6px;">Total</th><th style="text-align:right;padding:6px;">%</th></tr>';
@@ -812,7 +798,7 @@
     }
     document.getElementById('btn-actualiser-analyse').addEventListener('click', actualiserAnalyse);
 
-    // Changement d'onglet
+    // ---------- Onglets ----------
     document.querySelectorAll('.onglet').forEach(o => {
       o.addEventListener('click', function() {
         const n = this.dataset.onglet;
@@ -827,7 +813,7 @@
       });
     });
 
-    // Modale ajout
+    // ---------- Modale ajout ----------
     const mo = document.getElementById('modal-overlay');
     document.getElementById('btn-ajout').addEventListener('click', () => {
       document.getElementById('form-date').value = new Date().toISOString().slice(0,10);
@@ -871,7 +857,7 @@
       }
     });
 
-    // Export CSV
+    // ---------- Export / Sauvegarde / Restauration ----------
     document.getElementById('export-btn').addEventListener('click', () => {
       let csv = 'Date;Opération;Type;Catégorie;Mode;Montant;Pointé\n';
       operations.forEach(o => { csv += `${o.date};${o.libelle};${o.type};${o.categorie};${o.mode};${o.montant};${o.pointe?'Oui':'Non'}\n`; });
@@ -880,7 +866,6 @@
       showToast('Export CSV effectué.', 'info');
     });
 
-    // Sauvegarde / Restauration JSON
     document.getElementById('save-btn').addEventListener('click', async () => {
       const soldesInitiaux = await readAll('soldesInitiaux');
       const suppressions = await readAll('suppressions');
