@@ -7,90 +7,147 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%231e5d3f'/><text y='.75em' font-size='55' text-anchor='middle' fill='white'>€</text></svg>">
   <link rel="manifest" href="manifest.json">
   <style>
+    :root {
+      --bg-app: #fffcf5;
+      --bg-page: #f0f0f0;
+      --text: #333;
+      --text-secondary: #555;
+      --border: #c0b8a0;
+      --bg-soldes: #e9e6df;
+      --bg-onglet: #e9e6df;
+      --bg-onglet-actif: white;
+      --bg-table: white;
+      --bg-th: #f3efe5;
+      --border-th: #b0a58c;
+      --row-border: #ddd6c8;
+      --btn-bg: #f3efe5;
+      --btn-text: #333;
+      --btn-border: #c0b8a0;
+      --credit: #1e5d3f;
+      --debit: #b00020;
+      --recurrent-group-bg: #f9f9f4;
+      --modal-bg: white;
+      --input-bg: white;
+      --input-border: #ccc;
+      --toast-bg-info: #2c3e50;
+      --toast-bg-success: #1e5d3f;
+      --toast-bg-error: #b00020;
+      --bar-bg: #eee;
+    }
+
+    body.dark {
+      --bg-app: #1e1e1e;
+      --bg-page: #121212;
+      --text: #e0e0e0;
+      --text-secondary: #b0b0b0;
+      --border: #444;
+      --bg-soldes: #2a2a2a;
+      --bg-onglet: #2a2a2a;
+      --bg-onglet-actif: #1e1e1e;
+      --bg-table: #2a2a2a;
+      --bg-th: #333;
+      --border-th: #555;
+      --row-border: #444;
+      --btn-bg: #333;
+      --btn-text: #e0e0e0;
+      --btn-border: #555;
+      --credit: #4caf50;
+      --debit: #ef5350;
+      --recurrent-group-bg: #2a2a2a;
+      --modal-bg: #2a2a2a;
+      --input-bg: #1e1e1e;
+      --input-border: #555;
+      --toast-bg-info: #3a5068;
+      --toast-bg-success: #2e7d32;
+      --toast-bg-error: #c62828;
+      --bar-bg: #444;
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: system-ui, -apple-system, sans-serif; background: #f0f0f0; display: flex; justify-content: center; padding: 10px; color: #333; }
-    .app { max-width: 700px; width: 100%; background: #fffcf5; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); padding: 12px; font-size: 0.9rem; }
-    .top-bar { display: flex; justify-content: flex-end; margin-bottom: 8px; gap: 6px; flex-wrap: wrap; }
-    .top-bar button { background: #f3efe5; border: 1px solid #c0b8a0; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 0.75rem; color: #333; }
-    .search-box { width: 100%; padding: 8px; border: 1px solid #c0b8a0; border-radius: 6px; margin-bottom: 8px; font-size: 0.9rem; background: white; }
-    .onglets { display: flex; border-bottom: 2px solid #c0b8a0; margin-bottom: 12px; }
-    .onglet { padding: 8px 12px; cursor: pointer; border-radius: 6px 6px 0 0; background: #e9e6df; margin-right: 4px; font-weight: 500; font-size: 0.85rem; border: 1px solid transparent; border-bottom: none; color: #333; }
-    .onglet.actif { background: white; border-color: #c0b8a0; font-weight: 600; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg-page); display: flex; justify-content: center; padding: 10px; color: var(--text); }
+    .app { max-width: 700px; width: 100%; background: var(--bg-app); border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); padding: 12px; font-size: 0.9rem; }
+    .top-bar { display: flex; justify-content: flex-end; margin-bottom: 8px; gap: 6px; flex-wrap: wrap; align-items: center; }
+    .top-bar button { background: var(--btn-bg); border: 1px solid var(--btn-border); padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 0.75rem; color: var(--btn-text); }
+    #theme-btn { font-size: 1.2rem; padding: 4px 8px; line-height: 1; }
+    .search-box { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 8px; font-size: 0.9rem; background: var(--input-bg); color: var(--text); }
+    .onglets { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 12px; }
+    .onglet { padding: 8px 12px; cursor: pointer; border-radius: 6px 6px 0 0; background: var(--bg-onglet); margin-right: 4px; font-weight: 500; font-size: 0.85rem; border: 1px solid transparent; border-bottom: none; color: var(--text); }
+    .onglet.actif { background: var(--bg-onglet-actif); border-color: var(--border); font-weight: 600; }
     .contenu-onglet { display: none; }
     .contenu-onglet.actif { display: block; }
-    .soldes { background: #e9e6df; border: 1px solid #c0b8a0; border-radius: 6px; padding: 8px 12px; margin-bottom: 8px; }
+    .soldes { background: var(--bg-soldes); border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; margin-bottom: 8px; }
     .solde-line { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
     .solde-label { font-size: 0.85rem; }
     .solde-value { font-weight: bold; }
-    .positif { color: #1e5d3f; }
-    .negatif { color: #b00020; }
+    .positif { color: var(--credit); }
+    .negatif { color: var(--debit); }
     .mois-selector { text-align: center; margin: 8px 0; display: flex; justify-content: center; align-items: center; gap: 10px; }
-    .mois-selector button { background: none; border: 1px solid #aaa; border-radius: 4px; padding: 4px 8px; cursor: pointer; }
+    .mois-selector button { background: none; border: 1px solid var(--border); border-radius: 4px; padding: 4px 8px; cursor: pointer; color: var(--text); }
     .mois-selector span { font-weight: 600; min-width: 110px; display: inline-block; }
-    .table-wrapper { overflow-x: auto; margin-bottom: 12px; border: 1px solid #c0b8a0; border-radius: 4px; background: white; }
+    .table-wrapper { overflow-x: auto; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-table); }
     table { width: 100%; border-collapse: collapse; min-width: 700px; }
-    th { background: #f3efe5; font-weight: 600; font-size: 0.7rem; text-transform: uppercase; padding: 8px 2px; border-bottom: 2px solid #b0a58c; }
-    td { padding: 6px 2px; border-bottom: 1px solid #ddd6c8; font-size: 0.75rem; vertical-align: middle; }
+    th { background: var(--bg-th); font-weight: 600; font-size: 0.7rem; text-transform: uppercase; padding: 8px 2px; border-bottom: 2px solid var(--border-th); color: var(--text); }
+    td { padding: 6px 2px; border-bottom: 1px solid var(--row-border); font-size: 0.75rem; vertical-align: middle; color: var(--text); }
     .text-right { text-align: right; }
     .text-center { text-align: center; }
-    .debit { color: #b00020; }
-    .credit { color: #1e5d3f; }
+    .debit { color: var(--debit); }
+    .credit { color: var(--credit); }
     .pointe-checkbox { width: 18px; height: 18px; cursor: pointer; accent-color: #1e5d3f; }
-    .btn-supprimer-op, .btn-modifier-op { background: none; border: none; font-size: 1.1rem; cursor: pointer; padding: 2px 5px; line-height: 1; }
+    .btn-supprimer-op, .btn-modifier-op { background: none; border: none; font-size: 1.1rem; cursor: pointer; padding: 2px 5px; line-height: 1; color: var(--text); }
     .recurrent-group {
-      border: 2px solid #1e5d3f;
+      border: 2px solid var(--credit);
       border-radius: 6px;
       margin-bottom: 12px;
       overflow: hidden;
     }
     .recurrent-group-header {
-      background: #1e5d3f;
+      background: var(--credit);
       color: white;
       padding: 6px 8px;
       font-size: 0.8rem;
       font-weight: bold;
     }
     .recurrent-group table { border: none; }
-    .btn-ajout, .btn-generer, .btn-supprimer-tout { width: 100%; padding: 12px; font-size: 0.95rem; border: 1px solid #c0b8a0; background: #f3efe5; color: #333; border-radius: 4px; cursor: pointer; font-weight: 500; margin-top: 6px; }
-    .btn-supprimer-tout { color: #b00020; border-color: #b00020; }
+    .btn-ajout, .btn-generer, .btn-supprimer-tout { width: 100%; padding: 12px; font-size: 0.95rem; border: 1px solid var(--btn-border); background: var(--btn-bg); color: var(--btn-text); border-radius: 4px; cursor: pointer; font-weight: 500; margin-top: 6px; }
+    .btn-supprimer-tout { color: var(--debit); border-color: var(--debit); }
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 10; }
     .modal-overlay.active { display: flex; }
-    .modal { background: white; border-radius: 8px; padding: 16px; width: 360px; max-width: 90%; max-height: 90vh; overflow-y: auto; box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
-    .modal h3 { margin-bottom: 12px; font-size: 1.1rem; color: #333; }
-    .modal label { display: block; font-size: 0.8rem; margin-top: 8px; margin-bottom: 2px; color: #333; }
-    .modal input, .modal select, .modal datalist { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem; }
+    .modal { background: var(--modal-bg); border-radius: 8px; padding: 16px; width: 360px; max-width: 90%; max-height: 90vh; overflow-y: auto; box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+    .modal h3 { margin-bottom: 12px; font-size: 1.1rem; color: var(--text); }
+    .modal label { display: block; font-size: 0.8rem; margin-top: 8px; margin-bottom: 2px; color: var(--text); }
+    .modal input, .modal select, .modal datalist { width: 100%; padding: 8px; border: 1px solid var(--input-border); border-radius: 4px; font-size: 0.9rem; background: var(--input-bg); color: var(--text); }
     .btn-group { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
     .btn-save { background: #1e5d3f; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: 600; }
-    .btn-cancel { background: #eee; border: 1px solid #aaa; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
-    .recurrence-form { background: white; border: 1px solid #c0b8a0; border-radius: 6px; padding: 12px; margin-bottom: 12px; }
-    .recurrence-form label { display: block; font-size: 0.8rem; margin-top: 6px; margin-bottom: 2px; }
-    .recurrence-form input, .recurrence-form select { width: 100%; padding: 7px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem; }
+    .btn-cancel { background: #eee; border: 1px solid #aaa; padding: 8px 16px; border-radius: 4px; cursor: pointer; color: #333; }
+    .recurrence-form { background: var(--modal-bg); border: 1px solid var(--border); border-radius: 6px; padding: 12px; margin-bottom: 12px; }
+    .recurrence-form label { display: block; font-size: 0.8rem; margin-top: 6px; margin-bottom: 2px; color: var(--text); }
+    .recurrence-form input, .recurrence-form select { width: 100%; padding: 7px; border: 1px solid var(--input-border); border-radius: 4px; font-size: 0.9rem; background: var(--input-bg); color: var(--text); }
     .liste-recurrences { list-style: none; margin-top: 10px; }
-    .recurrence-item { display: flex; justify-content: space-between; align-items: center; background: #fff; border: 1px solid #ddd; padding: 8px; border-radius: 6px; margin-bottom: 6px; }
-    .recurrence-item > div { flex: 1; }
+    .recurrence-item { display: flex; justify-content: space-between; align-items: center; background: var(--bg-table); border: 1px solid var(--border); padding: 8px; border-radius: 6px; margin-bottom: 6px; }
+    .recurrence-item > div { flex: 1; color: var(--text); }
     .recurrence-actions { display: flex; gap: 4px; }
-    .btn-supprimer { background: #b00020; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
-    .btn-modifier-recurrence { background: none; border: 1px solid #aaa; border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 0.9rem; }
-    .analyse-resume { background: white; border: 1px solid #c0b8a0; border-radius: 6px; padding: 12px; }
+    .btn-supprimer { background: var(--debit); color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
+    .btn-modifier-recurrence { background: none; border: 1px solid var(--border); border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 0.9rem; color: var(--text); }
+    .analyse-resume { background: var(--bg-table); border: 1px solid var(--border); border-radius: 6px; padding: 12px; }
     .filtre-periode { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
-    .filtre-periode select { padding: 6px; border: 1px solid #ccc; border-radius: 4px; }
+    .filtre-periode select { padding: 6px; border: 1px solid var(--input-border); border-radius: 4px; background: var(--input-bg); color: var(--text); }
     .filtre-periode button { background: #1e5d3f; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
     .tutorial-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 20; }
     .tutorial-overlay.active { display: flex; }
-    .tutorial-box { background: white; border-radius: 12px; padding: 24px; max-width: 350px; text-align: center; }
+    .tutorial-box { background: var(--modal-bg); border-radius: 12px; padding: 24px; max-width: 350px; text-align: center; }
     .tutorial-box button { background: #1e5d3f; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 12px; }
     .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 30; display: flex; flex-direction: column; gap: 8px; }
     .toast { padding: 10px 16px; border-radius: 6px; color: white; font-size: 0.85rem; box-shadow: 0 2px 6px rgba(0,0,0,0.2); opacity: 0.95; animation: fadein 0.3s; }
-    .toast-success { background: #1e5d3f; }
-    .toast-error { background: #b00020; }
-    .toast-info { background: #2c3e50; }
+    .toast-success { background: var(--toast-bg-success); }
+    .toast-error { background: var(--toast-bg-error); }
+    .toast-info { background: var(--toast-bg-info); }
     @keyframes fadein { from { opacity: 0; transform: translateY(20px); } to { opacity: 0.95; transform: translateY(0); } }
     .bar-chart { margin-bottom: 12px; }
     .bar-row { display: flex; align-items: center; margin-bottom: 4px; }
-    .bar-label { width: 90px; font-size: 0.75rem; text-align: right; margin-right: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .bar-container { flex: 1; height: 18px; background: #eee; border-radius: 3px; position: relative; }
-    .bar-fill { height: 100%; background: #1e5d3f; border-radius: 3px; }
-    .bar-value { font-size: 0.7rem; margin-left: 4px; width: 60px; }
+    .bar-label { width: 90px; font-size: 0.75rem; text-align: right; margin-right: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+    .bar-container { flex: 1; height: 18px; background: var(--bar-bg); border-radius: 3px; position: relative; }
+    .bar-fill { height: 100%; background: var(--credit); border-radius: 3px; }
+    .bar-value { font-size: 0.7rem; margin-left: 4px; width: 60px; color: var(--text); }
     @media (max-width: 600px) {
       .table-wrapper { border: none; }
       table { min-width: auto; width: 100%; }
@@ -99,10 +156,11 @@
     }
   </style>
 </head>
-<body>
+<body class="">
 
 <div class="app" id="app">
   <div class="top-bar">
+    <button id="theme-btn" title="Thème" aria-label="Changer le thème">☀️</button>
     <button id="export-btn" title="Exporter CSV" aria-label="Exporter les opérations en CSV">📥 CSV</button>
     <button id="save-btn" title="Sauvegarder" aria-label="Sauvegarder toutes les données">💾 Sauvegarder</button>
     <button id="restore-btn" title="Restaurer" aria-label="Restaurer une sauvegarde">📂 Restaurer</button>
@@ -320,6 +378,53 @@
       }
     }
 
+    // ---------- Thème ----------
+    const themeKey = 'theme-v2';
+    function applyTheme(mode) {
+      if (mode === 'auto') {
+        document.body.classList.toggle('dark', window.matchMedia('(prefers-color-scheme: dark)').matches);
+      } else {
+        document.body.classList.toggle('dark', mode === 'dark');
+      }
+      updateThemeIcon(mode);
+      localStorage.setItem(themeKey, mode);
+    }
+
+    function updateThemeIcon(mode) {
+      const btn = document.getElementById('theme-btn');
+      if (!btn) return;
+      if (mode === 'auto') {
+        btn.textContent = '🔄';
+        btn.title = 'Thème automatique';
+      } else if (mode === 'dark') {
+        btn.textContent = '🌙';
+        btn.title = 'Thème sombre';
+      } else {
+        btn.textContent = '☀️';
+        btn.title = 'Thème clair';
+      }
+    }
+
+    function cycleTheme() {
+      const current = localStorage.getItem(themeKey) || 'auto';
+      const next = current === 'auto' ? 'dark' : current === 'dark' ? 'light' : 'auto';
+      applyTheme(next);
+    }
+
+    document.getElementById('theme-btn').addEventListener('click', cycleTheme);
+
+    // Écouter les changements système si mode auto
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+      const mode = localStorage.getItem(themeKey) || 'auto';
+      if (mode === 'auto') applyTheme('auto');
+    });
+
+    // Appliquer le thème sauvegardé au chargement
+    (function initTheme() {
+      const saved = localStorage.getItem(themeKey) || 'auto';
+      applyTheme(saved);
+    })();
+
     // ---------- État global ----------
     let operations = [], gabarits = [], prochainIdOp = 1, prochainIdGab = 1;
     let moisActuel = new Date().getMonth();
@@ -439,22 +544,17 @@
 
     function afficherLivre() {
       const opsMois = filtrerParMois(moisActuel, anneeActuelle);
-      // Filtre recherche
       const filtered = opsMois.filter(op => {
         if (!searchTerm) return true;
         const t = searchTerm.toLowerCase();
         return op.libelle.toLowerCase().includes(t) || op.categorie.toLowerCase().includes(t) || op.mode.toLowerCase().includes(t);
       });
 
-      // Trier toutes les opérations du mois (pour calcul du solde progressif)
       const allSorted = [...opsMois].sort((a,b) => new Date(a.date) - new Date(b.date));
-      // Trier les filtrées également
       const filteredSorted = [...filtered].sort((a,b) => new Date(a.date) - new Date(b.date));
 
       const { soldePointe, soldeDisponible, SI } = calculerSoldesAffiches();
 
-      // Calcul des cumuls pour les opérations filtrées, en tenant compte de l'ordre chronologique global
-      // On doit simuler le cumul sur toutes les opérations du mois (même non filtrées) pour avoir le bon solde pour chaque ligne filtrée.
       let cumul = SI;
       const rows = [];
       for (const op of allSorted) {
@@ -464,7 +564,6 @@
         }
       }
 
-      // Séparer en deux groupes pour l'affichage : récurrentes et ponctuelles
       const recRows = rows.filter(r => r.op.gabaritId);
       const poncRows = rows.filter(r => !r.op.gabaritId);
 
@@ -485,14 +584,13 @@
       document.getElementById('rec-table-wrapper').innerHTML = genererHTMLTableauDepuisRows(recRows);
       document.getElementById('ponc-table-wrapper').innerHTML = genererHTMLTableauDepuisRows(poncRows);
 
-      // Mise à jour des soldes
       document.getElementById('solde-pointe').textContent = `${soldePointe.toFixed(2)} €`;
       document.getElementById('solde-disponible').textContent = `${soldeDisponible.toFixed(2)} €`;
       document.getElementById('solde-pointe').className = 'solde-value ' + (soldePointe >= 0 ? 'positif' : 'negatif');
       document.getElementById('solde-disponible').className = 'solde-value ' + (soldeDisponible >= 0 ? 'positif' : 'negatif');
       document.getElementById('mois-courant-livre').textContent = new Date(anneeActuelle, moisActuel).toLocaleDateString('fr-FR', {month:'long', year:'numeric'});
 
-      // Attacher les événements
+      // Événements
       document.querySelectorAll('.pointe-checkbox').forEach(cb => {
         cb.addEventListener('change', async function() {
           const id = parseInt(this.dataset.id);
@@ -539,7 +637,6 @@
       afficherLivre();
     }
 
-    // ---------- Listes personnalisées ----------
     function getListePersonnalisee(champ) {
       const ensemble = new Set();
       operations.forEach(op => ensemble.add(op[champ]));
@@ -797,7 +894,6 @@
       if (!total) {
         html += '<p style="text-align:center;padding:10px;">Aucune dépense sur la période</p>';
       } else {
-        // Graphique en barres horizontales
         html += '<div class="bar-chart">';
         Object.entries(cats).sort((a,b) => b[1] - a[1]).forEach(([cat, val]) => {
           const pourcent = (val/total*100).toFixed(1);
@@ -808,11 +904,10 @@
           </div>`;
         });
         html += '</div>';
-        // Tableau détaillé
         html += '<table style="width:100%;border-collapse:collapse;margin-top:8px;">';
-        html += '<tr style="border-bottom:2px solid #b0a58c;"><th style="text-align:left;padding:6px;">Catégorie</th><th style="text-align:right;padding:6px;">Total</th><th style="text-align:right;padding:6px;">%</th></tr>';
+        html += '<tr style="border-bottom:2px solid var(--border-th);"><th style="text-align:left;padding:6px;">Catégorie</th><th style="text-align:right;padding:6px;">Total</th><th style="text-align:right;padding:6px;">%</th></tr>';
         Object.entries(cats).sort((a,b) => b[1] - a[1]).forEach(([cat, val]) => {
-          html += `<tr style="border-bottom:1px solid #ddd;">
+          html += `<tr style="border-bottom:1px solid var(--row-border);">
             <td style="padding:6px;">${cat}</td>
             <td style="text-align:right;padding:6px;">${val.toFixed(2)} €</td>
             <td style="text-align:right;padding:6px;">${(val/total*100).toFixed(1)}%</td>
