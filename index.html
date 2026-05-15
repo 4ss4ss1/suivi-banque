@@ -37,11 +37,20 @@
     .credit { color: #1e5d3f; }
     .pointe-checkbox { width: 18px; height: 18px; cursor: pointer; accent-color: #1e5d3f; }
     .btn-supprimer-op, .btn-modifier-op { background: none; border: none; font-size: 1.1rem; cursor: pointer; padding: 2px 5px; line-height: 1; }
-    /* Lignes récurrentes : fond légèrement teinté + bordure gauche */
-    tr.recurrente {
-      background: #f3f7f0;
-      border-left: 3px solid #1e5d3f;
+    .recurrent-group {
+      border: 2px solid #1e5d3f;
+      border-radius: 6px;
+      margin-bottom: 12px;
+      overflow: hidden;
     }
+    .recurrent-group-header {
+      background: #1e5d3f;
+      color: white;
+      padding: 6px 8px;
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
+    .recurrent-group table { border: none; }
     .btn-ajout, .btn-generer, .btn-supprimer-tout { width: 100%; padding: 12px; font-size: 0.95rem; border: 1px solid #c0b8a0; background: #f3efe5; color: #333; border-radius: 4px; cursor: pointer; font-weight: 500; margin-top: 6px; }
     .btn-supprimer-tout { color: #b00020; border-color: #b00020; }
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 10; }
@@ -129,19 +138,7 @@
       <span id="mois-courant-livre">…</span>
       <button id="mois-suivant" aria-label="Mois suivant">▶</button>
     </div>
-    <div class="table-wrapper">
-      <table id="table-operations">
-        <thead>
-          <tr>
-            <th>Date</th><th>Opération</th><th>Catégorie</th><th>Mode</th>
-            <th class="text-right">Débit</th><th class="text-right">Crédit</th>
-            <th class="text-right">Solde</th><th class="text-center">Pointé</th>
-            <th class="text-center">Mod.</th><th class="text-center">Suppr.</th>
-          </tr>
-        </thead>
-        <tbody id="corps-table"></tbody>
-      </table>
-    </div>
+    <div id="livre-contenu"></div>
     <button class="btn-ajout" id="btn-ajout" aria-label="Ajouter une nouvelle opération">+ Nouvelle opération</button>
     <button class="btn-generer" id="btn-generer" aria-label="Générer les opérations récurrentes du mois">🔄 Générer opérations récurrentes</button>
     <button class="btn-supprimer-tout" id="btn-supprimer-tout" aria-label="Supprimer toutes les opérations du mois">🗑️ Tout supprimer ce mois</button>
@@ -198,9 +195,7 @@
       </select>
       <button id="btn-actualiser-analyse">Actualiser</button>
     </div>
-    <div class="analyse-resume" id="analyse-resultat">
-      <!-- Le graphique et le tableau seront générés ici -->
-    </div>
+    <div class="analyse-resume" id="analyse-resultat"></div>
   </div>
 
   <!-- Modale ajout -->
@@ -420,58 +415,84 @@
       return { soldePointe, soldeDisponible, opsTriees, SI };
     }
 
+    function genererHTMLTableauDepuisRows(rows) {
+      if (rows.length === 0) return '<table><thead><tr><th>Date</th><th>Opération</th><th>Catégorie</th><th>Mode</th><th class="text-right">Débit</th><th class="text-right">Crédit</th><th class="text-right">Solde</th><th class="text-center">Pointé</th><th class="text-center">Mod.</th><th class="text-center">Suppr.</th></tr></thead><tbody><tr><td colspan="10" style="text-align:center;padding:20px;">Aucune opération</td></tr></tbody></table>';
+      let html = '<table><thead><tr><th>Date</th><th>Opération</th><th>Catégorie</th><th>Mode</th><th class="text-right">Débit</th><th class="text-right">Crédit</th><th class="text-right">Solde</th><th class="text-center">Pointé</th><th class="text-center">Mod.</th><th class="text-center">Suppr.</th></tr></thead><tbody>';
+      for (const row of rows) {
+        const op = row.op;
+        html += `<tr>
+          <td>${new Date(op.date).toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'})}</td>
+          <td><strong>${op.libelle}</strong>${op.gabaritId ? ' 🔁' : ''}</td>
+          <td>${op.categorie}</td>
+          <td>${op.mode}</td>
+          <td class="text-right debit">${op.type === 'depense' ? op.montant.toFixed(2)+' €' : ''}</td>
+          <td class="text-right credit">${op.type === 'revenu' ? op.montant.toFixed(2)+' €' : ''}</td>
+          <td class="text-right">${row.cumul.toFixed(2)} €</td>
+          <td class="text-center"><input type="checkbox" class="pointe-checkbox" data-id="${op.id}" ${op.pointe ? 'checked' : ''}></td>
+          <td class="text-center"><button class="btn-modifier-op" data-id="${op.id}">✏️</button></td>
+          <td class="text-center"><button class="btn-supprimer-op" data-id="${op.id}">🗑️</button></td>
+        </tr>`;
+      }
+      html += '</tbody></table>';
+      return html;
+    }
+
     function afficherLivre() {
       const opsMois = filtrerParMois(moisActuel, anneeActuelle);
-      // Appliquer le filtre de recherche
-      const opsMoisFiltrees = opsMois.filter(op => {
+      // Filtre recherche
+      const filtered = opsMois.filter(op => {
         if (!searchTerm) return true;
         const t = searchTerm.toLowerCase();
         return op.libelle.toLowerCase().includes(t) || op.categorie.toLowerCase().includes(t) || op.mode.toLowerCase().includes(t);
       });
-      // Trier chronologiquement (les récurrentes restent à leur place)
-      opsMoisFiltrees.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-      const { soldePointe, soldeDisponible, opsTriees, SI } = calculerSoldesAffiches();
-      const corps = document.getElementById('corps-table');
-      corps.innerHTML = '';
+      // Trier toutes les opérations du mois (pour calcul du solde progressif)
+      const allSorted = [...opsMois].sort((a,b) => new Date(a.date) - new Date(b.date));
+      // Trier les filtrées également
+      const filteredSorted = [...filtered].sort((a,b) => new Date(a.date) - new Date(b.date));
 
-      if (opsMoisFiltrees.length === 0) {
-        corps.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:20px;">Aucune opération</td></tr>';
-      } else {
-        let cumulProgressif = SI;
-        // Parcourir toutes les opérations du mois (ordre chrono) pour calculer le solde correct
-        // et n'afficher que celles qui passent le filtre
-        for (const op of opsTriees) {
-          const montant = op.type === 'revenu' ? op.montant : -op.montant;
-          cumulProgressif += montant;
-          if (!opsMoisFiltrees.includes(op)) continue;
+      const { soldePointe, soldeDisponible, SI } = calculerSoldesAffiches();
 
-          const tr = document.createElement('tr');
-          if (op.gabaritId) tr.classList.add('recurrente');
-
-          tr.innerHTML = `
-            <td>${new Date(op.date).toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'})}</td>
-            <td><strong>${op.libelle}</strong>${op.gabaritId ? ' 🔁' : ''}</td>
-            <td>${op.categorie}</td>
-            <td>${op.mode}</td>
-            <td class="text-right debit">${op.type === 'depense' ? op.montant.toFixed(2)+' €' : ''}</td>
-            <td class="text-right credit">${op.type === 'revenu' ? op.montant.toFixed(2)+' €' : ''}</td>
-            <td class="text-right">${cumulProgressif.toFixed(2)} €</td>
-            <td class="text-center"><input type="checkbox" class="pointe-checkbox" data-id="${op.id}" ${op.pointe ? 'checked' : ''} aria-label="Pointer l'opération"></td>
-            <td class="text-center"><button class="btn-modifier-op" data-id="${op.id}" aria-label="Modifier l'opération">✏️</button></td>
-            <td class="text-center"><button class="btn-supprimer-op" data-id="${op.id}" aria-label="Supprimer l'opération">🗑️</button></td>
-          `;
-          corps.appendChild(tr);
+      // Calcul des cumuls pour les opérations filtrées, en tenant compte de l'ordre chronologique global
+      // On doit simuler le cumul sur toutes les opérations du mois (même non filtrées) pour avoir le bon solde pour chaque ligne filtrée.
+      let cumul = SI;
+      const rows = [];
+      for (const op of allSorted) {
+        cumul += (op.type === 'revenu' ? op.montant : -op.montant);
+        if (filtered.includes(op)) {
+          rows.push({op, cumul});
         }
       }
 
+      // Séparer en deux groupes pour l'affichage : récurrentes et ponctuelles
+      const recRows = rows.filter(r => r.op.gabaritId);
+      const poncRows = rows.filter(r => !r.op.gabaritId);
+
+      const container = document.getElementById('livre-contenu');
+      container.innerHTML = '';
+
+      // Groupe récurrent
+      const recDiv = document.createElement('div');
+      recDiv.className = 'recurrent-group';
+      recDiv.innerHTML = `<div class="recurrent-group-header">Opérations récurrentes</div><div class="table-wrapper" id="rec-table-wrapper"></div>`;
+      container.appendChild(recDiv);
+
+      // Groupe ponctuel
+      const poncDiv = document.createElement('div');
+      poncDiv.innerHTML = `<div class="table-wrapper" id="ponc-table-wrapper"></div>`;
+      container.appendChild(poncDiv);
+
+      document.getElementById('rec-table-wrapper').innerHTML = genererHTMLTableauDepuisRows(recRows);
+      document.getElementById('ponc-table-wrapper').innerHTML = genererHTMLTableauDepuisRows(poncRows);
+
+      // Mise à jour des soldes
       document.getElementById('solde-pointe').textContent = `${soldePointe.toFixed(2)} €`;
       document.getElementById('solde-disponible').textContent = `${soldeDisponible.toFixed(2)} €`;
       document.getElementById('solde-pointe').className = 'solde-value ' + (soldePointe >= 0 ? 'positif' : 'negatif');
       document.getElementById('solde-disponible').className = 'solde-value ' + (soldeDisponible >= 0 ? 'positif' : 'negatif');
       document.getElementById('mois-courant-livre').textContent = new Date(anneeActuelle, moisActuel).toLocaleDateString('fr-FR', {month:'long', year:'numeric'});
 
-      // Événements
+      // Attacher les événements
       document.querySelectorAll('.pointe-checkbox').forEach(cb => {
         cb.addEventListener('change', async function() {
           const id = parseInt(this.dataset.id);
@@ -485,7 +506,7 @@
           const id = parseInt(this.dataset.id);
           const op = operations.find(o => o.id === id);
           if (!op) return;
-          if (!confirm(op.pointe ? '⚠️ Opération pointée. La supprimer peut désynchroniser le rapprochement. Continuer ?' : 'Supprimer cette opération ?')) return;
+          if (!confirm(op.pointe ? '⚠️ Opération pointée. Supprimer ?' : 'Supprimer ?')) return;
           await supprimerOperation(op);
           operations = operations.filter(o => o.id !== id);
           afficherTout();
@@ -518,6 +539,7 @@
       afficherLivre();
     }
 
+    // ---------- Listes personnalisées ----------
     function getListePersonnalisee(champ) {
       const ensemble = new Set();
       operations.forEach(op => ensemble.add(op[champ]));
@@ -529,7 +551,11 @@
       const dl = document.getElementById(datalistId);
       if (!dl) return;
       dl.innerHTML = '';
-      options.forEach(opt => { const o = document.createElement('option'); o.value = opt; dl.appendChild(o); });
+      options.forEach(opt => {
+        const o = document.createElement('option');
+        o.value = opt;
+        dl.appendChild(o);
+      });
     }
 
     function mettreAJourDatalistsModale() {
@@ -669,7 +695,7 @@
         const entry = soldesInitiaux.find(s => s.mois === moisStr);
         soldeInitialCourant = entry ? entry.valeur : 0;
         document.getElementById('solde-initial-input').value = soldeInitialCourant;
-        await genererOperationsPourMois(moisActuel, anneeActuelle, true); // auto seulement
+        await genererOperationsPourMois(moisActuel, anneeActuelle, true);
         afficherTout();
       } finally { this.disabled = false; }
     });
