@@ -1403,28 +1403,28 @@ function renderLivre() {
 
   const recDiv  = buildTable(recRows,  'Opérations récurrentes', true);
   const poncDiv = buildTable(poncRows, 'Opérations ponctuelles', false);
-  if (recDiv)  container.appendChild(recDiv);
-  if (poncDiv) container.appendChild(poncDiv);
+  if (recDiv  && recDiv.nodeType)  container.appendChild(recDiv);
+  if (poncDiv && poncDiv.nodeType) container.appendChild(poncDiv);
 
   if (!recRows.length && !poncRows.length && !term) {
     container.innerHTML = '<div class="empty-state"><div class="es-icon">📋</div>Aucune opération ce mois.<br>Ajoutez-en une ou générez les récurrences.</div>';
   }
 
-  // Events
-  container.querySelectorAll('.pointe-cb').forEach(cb => {
-    cb.onchange = async () => {
-      const op = operations.find(o => o.id === parseInt(cb.dataset.id));
-      if (!op) return;
-      op.pointe = cb.checked;
-      await put('operations', op);
-      renderLivre();
-    };
+  // Délégation d'événements sur le container (évite les problèmes de DOM timing)
+  container.addEventListener('change', async e => {
+    const cb = e.target.closest('.pointe-cb');
+    if (!cb) return;
+    const op = operations.find(o => o.id === parseInt(cb.dataset.id));
+    if (!op) return;
+    op.pointe = cb.checked;
+    await put('operations', op);
+    renderLivre();
   });
-  container.querySelectorAll('.edit-btn').forEach(btn => {
-    btn.onclick = () => openEditOp(parseInt(btn.dataset.id));
-  });
-  container.querySelectorAll('.del-btn').forEach(btn => {
-    btn.onclick = () => deleteOp(parseInt(btn.dataset.id));
+  container.addEventListener('click', e => {
+    const edit = e.target.closest('.edit-btn');
+    if (edit) { openEditOp(parseInt(edit.dataset.id)); return; }
+    const del = e.target.closest('.del-btn');
+    if (del) { deleteOp(parseInt(del.dataset.id)); return; }
   });
 }
 
